@@ -5,16 +5,19 @@ import matplotlib.pyplot as plt
 class Sinal:
 
     def __init__(self, sinal_path):
-        self.sinal = pd.read_table(sinal_path, header=None, decimal=',', names=["sinal_original"])
-        self.inicio = self.detectar_comprimento(self.sinal)
-        self.sinal_modificado = self.criar_sinal_modificado(self.sinal, self.inicio, 0.014)
+        sinal = pd.read_table(sinal_path, header=None, decimal=',', names=["sinal_original"])
+        self.sinal = np.array(sinal['sinal_original'])
+
+        inicio = self.detectar_comprimento(self.sinal)
+        self.sinal_modificado = self.criar_sinal_modificado(self.sinal, inicio, 0.014)
 
     def __str__(self):
         return str(self.sinal)
 
+
     def plot_sinal(self, tipo_sinal):
         if tipo_sinal == "original":
-            plt.plot(self.sinal["sinal_original"])
+            plt.plot(self.sinal)
             plt.title("Sinal Original")
             plt.show()
         elif tipo_sinal == "modificado":
@@ -41,24 +44,25 @@ class Sinal:
         #criar função para isolar os picos
 
         sinal_modificado = self.remover_pico_inicial(sinal, inicio)
-        #sinal_modificado = self.removendo_ruido(sinal_modificado, db)
+        sinal_modificado = self.arredondando_para_zero(sinal_modificado)
+        sinal_modificado = self.removendo_ruido(sinal_modificado, db)
         return sinal_modificado
 
-    def removendo_ruido(self, sinal, db):
-        sinal.loc[sinal["sinal_original"].abs() < db, 'modificado'] = 0.0
-        sinal.loc[sinal["sinal_original"].abs() > db, 'modificado'] = sinal["sinal_original"].loc[
-            sinal["sinal_original"].abs() > db]
-        return sinal
+    @staticmethod
+    def remover_pico_inicial(sinal, inicio):
+        sinal_sem_pico_inicial = sinal[inicio:]
+        return sinal_sem_pico_inicial
 
-    def remover_pico_inicial(self, sinal, inicio):
-        sinal_sem_pico_incial = pd.DataFrame(self.sinal["sinal_original"].iloc[self.inicio:]) #renomear o sinal
-        return sinal_sem_pico_incial
+    @staticmethod
+    def arredondando_para_zero(sinal):
+        sinal_arredondado = sinal - sinal.mean()
+        return sinal_arredondado
 
-    def arredondando_para_zero(self):
-        self.data_modificado = pd.DataFrame(self.data_original["sinal_original"].iloc[self.inicio:]
-                                            - self.data_original["sinal_original"].iloc[self.inicio:].mean())
-        print(self.data_modificado.mean())
-
+    @staticmethod
+    def removendo_ruido(sinal, db):
+        # TODO:
+        sinal_sem_ruido = np.array([0 if abs(sinal[i]) < db else sinal[i] for i in np.arange(0,len(sinal),1)])
+        return sinal_sem_ruido
         
 '''
     def convert_frequencia(self):
@@ -67,3 +71,5 @@ class Sinal:
         self.sinal["frequencia"] = frequencia
         return self.sinal
 '''
+sinal = Sinal("0.txt")
+sinal.plot_sinal("modificado")
