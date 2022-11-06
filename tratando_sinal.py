@@ -10,6 +10,7 @@ class Sinal:
 
         inicio = self.detectar_comprimento(self.sinal)
         self.sinal_modificado = self.criar_sinal_modificado(self.sinal, inicio, 0.014)
+        self.primeiro_pico = self.isolar_picos(self.sinal_modificado, 0)
 
     def __str__(self):
         return str(self.sinal)
@@ -24,6 +25,10 @@ class Sinal:
             plt.plot(self.sinal_modificado)
             plt.title("Sinal Modificado")
             plt.show()
+        elif tipo_sinal == "pico":
+            plt.plot(self.primeiro_pico)
+            plt.title("Primeiro Pico")
+            plt.show()
 
     @staticmethod
     def detectar_comprimento(sinal):
@@ -37,9 +42,6 @@ class Sinal:
         return inicio
     
     def criar_sinal_modificado(self, sinal, inicio, db):
-        # remover pico inicial
-        # remover o ruído
-        # arredondar para zero
 
         #criar função para isolar os picos
 
@@ -60,9 +62,24 @@ class Sinal:
 
     @staticmethod
     def removendo_ruido(sinal, db):
-        # TODO:
+        # TODO: Fazer o cálculo para diminuir pelo decibel. Olhar no manual do transdutor
         sinal_sem_ruido = np.array([0 if abs(sinal[i]) < db else sinal[i] for i in np.arange(0,len(sinal),1)])
         return sinal_sem_ruido
+
+    @staticmethod
+    def isolar_picos(sinal, numero_do_pico):
+        range_valores = 5000
+        indice_valor_max = np.argmax(sinal)
+        i = 0
+        k=0
+        while i <= numero_do_pico:
+            lim_max = indice_valor_max+range_valores*k
+            indice_valor_max = lim_max + np.argmax(sinal[lim_max:])
+            k=1
+            i += 1
+        pico_isolado = sinal[indice_valor_max-range_valores:indice_valor_max+range_valores]
+        return pico_isolado
+
         
 '''
     def convert_frequencia(self):
@@ -72,4 +89,4 @@ class Sinal:
         return self.sinal
 '''
 sinal = Sinal("0.txt")
-sinal.plot_sinal("modificado")
+sinal.plot_sinal("pico")
