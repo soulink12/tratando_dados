@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import mathmate as mm
 
+
 class Sinal:
 
     def __init__(self, sinal_path):
@@ -48,11 +49,8 @@ class Sinal:
         elif len(sinal) == 1000000:
             inicio = 10000
         return inicio
-    
+
     def criar_sinal_modificado(self, sinal, inicio, db):
-
-        #criar função para isolar os picos
-
         sinal_modificado = self.remover_pico_inicial(sinal, inicio)
         sinal_modificado = self.arredondando_para_zero(sinal_modificado)
         sinal_modificado = self.removendo_ruido(sinal_modificado, db)
@@ -63,17 +61,17 @@ class Sinal:
         _, indice_valor_max1 = self.isolar_picos(sinal, 1)
         intervalo = 5000
         sinal_cortado = sinal[indice_valor_max0 - intervalo:indice_valor_max1 + intervalo]
-        if(len(sinal_cortado)%2 == 1):
+        if len(sinal_cortado) % 2 == 1:
             sinal_cortado = sinal_cortado[1:]
         tempo_propagacao = mm.calculation(sinal_cortado, self.xinterval)
         return tempo_propagacao
 
     def calcular_frequencia_caracteristica(self, sinal):
-        sinalPlus = np.append(sinal, np.zeros(len(sinal)*5))
+        sinalPlus = np.append(sinal, np.zeros(len(sinal) * 5))
         n = len(sinalPlus)
 
         fr = np.fft.rfftfreq(n, self.xinterval)
-        X = 2/n * np.abs(np.fft.fft(sinalPlus))
+        X = 2 / n * np.abs(np.fft.fft(sinalPlus))
         plt.plot(fr, X[:len(fr)])
         return fr, X[:len(fr)]
 
@@ -90,7 +88,7 @@ class Sinal:
     @staticmethod
     def removendo_ruido(sinal, db):
         # TODO: Fazer o cálculo para diminuir pelo decibel. Olhar no manual do transdutor
-        sinal_sem_ruido = np.array([0 if abs(sinal[i]) < db else sinal[i] for i in np.arange(0,len(sinal),1)])
+        sinal_sem_ruido = np.array([0 if abs(sinal[i]) < db else sinal[i] for i in np.arange(0, len(sinal), 1)])
         return sinal_sem_ruido
 
     @staticmethod
@@ -98,22 +96,15 @@ class Sinal:
         range_valores = 5000
         indice_valor_max = np.argmax(sinal)
         i = 0
-        k=0
+        k = 0
         while i <= numero_do_pico:
-            lim_max = indice_valor_max+range_valores*k
+            lim_max = indice_valor_max + range_valores * k
             indice_valor_max = lim_max + np.argmax(sinal[lim_max:])
-            k=1
+            k = 1
             i += 1
-        pico_isolado = sinal[indice_valor_max-range_valores:indice_valor_max+range_valores]
+        pico_isolado = sinal[indice_valor_max - range_valores:indice_valor_max + range_valores]
         return pico_isolado, indice_valor_max
 
 
-'''
-    def convert_frequencia(self):
-        dados_refinados = np.append(np.array(self.sinal.tratado.iloc[MIN:MAX].copy()),
-                                    np.zeros(len(self.sinal.tratado.iloc[MIN:MAX]) * 10))
-        self.sinal["frequencia"] = frequencia
-        return self.sinal
-'''
 sinal = Sinal("0.txt")
 sinal.plot_sinal("frequencia")
