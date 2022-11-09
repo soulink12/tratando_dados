@@ -18,25 +18,6 @@ class Sinal:
         self.freq, self.dominio, self.primeira_freq_caracteristica = self.calcular_frequencia_caracteristica(
             self.primeiro_pico)
 
-    def plot_sinal(self, tipo_sinal):
-        # TODO: remover esta função
-        if tipo_sinal == "original":
-            plt.plot(self.sinal)
-            plt.title("Sinal Original")
-            plt.show()
-        elif tipo_sinal == "modificado":
-            plt.plot(self.sinal_modificado)
-            plt.title("Sinal Modificado")
-            plt.show()
-        elif tipo_sinal == "pico":
-            plt.plot(self.primeiro_pico)
-            plt.title("Primeiro Pico")
-            plt.show()
-        elif tipo_sinal == "frequencia":
-            plt.plot(self.freq, self.dominio)
-            plt.xlim(0, .8e7)
-            plt.show()
-
     @staticmethod
     def detectar_comprimento(sinal):
         inicio = 0
