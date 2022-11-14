@@ -11,6 +11,7 @@ class Sinal:
         sinal = pd.read_table(sinal_path, header=None, decimal=',', names=["sinal_original"])
         self.sinal = np.array(sinal['sinal_original'])
 
+
         inicio = self.detectar_comprimento(self.sinal)
         self.sinal_modificado = self.criar_sinal_modificado(self.sinal, inicio, 0.014)
         self.primeiro_pico, _ = self.isolar_picos(self.sinal_modificado, 0)
@@ -39,16 +40,18 @@ class Sinal:
         _, indice_valor_max0 = self.isolar_picos(sinal, 0)
         _, indice_valor_max1 = self.isolar_picos(sinal, 1)
         intervalo = int(np.floor(inicio/2))
-        sinal_cortado = sinal[indice_valor_max0 - intervalo:indice_valor_max1 + intervalo]
+        if(indice_valor_max0 >= intervalo):
+            sinal_cortado = sinal[indice_valor_max0 - intervalo:indice_valor_max1 + intervalo]
+        else:
+            sinal_cortado = sinal[0:indice_valor_max1 + intervalo]
         if len(sinal_cortado) % 2 == 1:
             sinal_cortado = sinal_cortado[1:]
         tempo_propagacao = mm.calculation(sinal_cortado, self.xinterval)
         return tempo_propagacao
 
     def calcular_frequencia_caracteristica(self, sinal):
-        sinalPlus = np.append(sinal, np.zeros(len(sinal) * 100))
+        sinalPlus = np.append(sinal, np.zeros(len(sinal) * 20))
         n = len(sinalPlus)
-
         fr = np.fft.rfftfreq(n, self.xinterval)
         X = 2 / n * np.abs(np.fft.fft(sinalPlus))
         plt.plot(fr, X[:len(fr)])
@@ -83,5 +86,8 @@ class Sinal:
             indice_valor_max = lim_max + np.argmax(sinal[lim_max:])
             k = 1
             i += 1
-        pico_isolado = sinal[indice_valor_max - range_valores:indice_valor_max + range_valores]
+        if(indice_valor_max >= range_valores):
+            pico_isolado = sinal[indice_valor_max - range_valores:indice_valor_max + range_valores]
+        else:
+            pico_isolado = sinal[0:indice_valor_max + range_valores]
         return pico_isolado, indice_valor_max
