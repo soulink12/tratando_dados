@@ -53,6 +53,7 @@ def processar_dados_cisalhante(path, pastas, numero_de_arquivos):
                     pbar.update(1)
                 tempos_propagacao_medio_lista.append(np.mean(tempos_propagacao_lista))
                 primeiras_freqs_caracteristicas_media_lista.append(np.mean(primeira_freq_caracteristica_lista))
+                print('Primeira frequência característica média: ', np.mean(primeira_freq_caracteristica_lista))
             salvar_dados(tempos_propagacao_medio_lista, primeiras_freqs_caracteristicas_media_lista, path, i)
             print('\n' + 'Dados da pasta ' + str(i) + ' salvos com sucesso!')
 
@@ -61,8 +62,6 @@ pastas = next(os.walk(path))[1]
 numero_de_arquivos = contar_arquivos(path)
 
 processar_dados_cisalhante(path, pastas, numero_de_arquivos)
-
-
 
 # Gerando o gráfico a partir dos arquivos txt gerados anteriormente
 n_pastas = len(pastas)

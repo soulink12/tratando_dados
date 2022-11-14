@@ -2,18 +2,19 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import mathmate as mm
+from scipy.signal import butter, sosfilt, sosfreqz
 
 class Sinal:
 
     def __init__(self, sinal_path):
-        self.xinterval = 1 / 2.5e9
+        self.fs = 2.5e9
+        self.xinterval = 1 / self.fs
 
         sinal = pd.read_table(sinal_path, header=None, decimal=',', names=["sinal_original"])
         self.sinal = np.array(sinal['sinal_original'])
 
-
         inicio = self.detectar_comprimento(self.sinal)
-        self.sinal_modificado = self.criar_sinal_modificado(self.sinal, inicio, 0.014)
+        self.sinal_modificado = self.criar_sinal_modificado(self.sinal, inicio, 0.35)
         self.primeiro_pico, _ = self.isolar_picos(self.sinal_modificado, 0)
         self.tempo_propagacao = self.calcular_tempo_propagacao(self.sinal_modificado, inicio)
         self.freq, self.dominio, self.primeira_freq_caracteristica = self.calcular_frequencia_caracteristica(
@@ -33,7 +34,8 @@ class Sinal:
     def criar_sinal_modificado(self, sinal, inicio, db):
         sinal_modificado = self.remover_pico_inicial(sinal, inicio)
         sinal_modificado = self.arredondando_para_zero(sinal_modificado)
-        sinal_modificado = self.removendo_ruido(sinal_modificado, db)
+        sinal_modificado = self.filtrando_band_pass(sinal_modificado, 3.0e6, 7.0e6, self.fs, order=9)
+        #sinal_modificado = self.removendo_amplitude(sinal_modificado, db)
         return sinal_modificado
 
     def calcular_tempo_propagacao(self, sinal, inicio):
@@ -54,10 +56,28 @@ class Sinal:
         n = len(sinalPlus)
         fr = np.fft.rfftfreq(n, self.xinterval)
         X = 2 / n * np.abs(np.fft.fft(sinalPlus))
-        plt.plot(fr, X[:len(fr)])
+        plt.plot(fr,X[:len(fr)])
+        plt.xlim(0, 1e7)
+        plt.show()
+        plt.close()
         primeira_freq_caracteristica = fr[np.argmax(X[:len(fr)])]
         return fr, X[:len(fr)], primeira_freq_caracteristica
 
+    def filtrando_band_pass(self, sinal, lowcut, highcut, fs, order=5):
+        y = self.butter_bandpass_filter(sinal, lowcut, highcut, fs, order=order)
+        return y
+
+    def butter_bandpass(self, lowcut, highcut, fs, order=5):
+        nyq = 0.5 * fs
+        low = lowcut / nyq
+        high = highcut / nyq
+        sos = butter(order, [low, high], analog=False, btype='band', output='sos')
+        return sos
+
+    def butter_bandpass_filter(self, data, lowcut, highcut, fs, order=5):
+        sos = self.butter_bandpass(lowcut, highcut, fs, order=order)
+        y = sosfilt(sos, data)
+        return y
 
     @staticmethod
     def remover_pico_inicial(sinal, inicio):
@@ -69,10 +89,13 @@ class Sinal:
         sinal_arredondado = sinal - sinal.mean()
         return sinal_arredondado
 
+
     @staticmethod
-    def removendo_ruido(sinal, db):
-        # TODO: Fazer o cálculo para diminuir pelo decibel. Olhar no manual do transdutor
-        sinal_sem_ruido = np.array([0 if abs(sinal[i]) < db else sinal[i] for i in np.arange(0, len(sinal), 1)])
+    def removendo_amplitude(sinal, queda_percentual):
+        amplitude = max(sinal)
+        amplitude_max = amplitude * queda_percentual
+        dbLoss = 20 * np.log10(amplitude / amplitude_max)
+        sinal_sem_ruido = np.array([0 if abs(20 * np.log10(abs(sinal[i])/amplitude)) >= dbLoss else sinal[i] for i in np.arange(0, len(sinal), 1)])
         return sinal_sem_ruido
 
     @staticmethod

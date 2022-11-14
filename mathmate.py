@@ -12,7 +12,6 @@ def MYXCORR(A, B):
     xcorr = corr[1:2 * T]
     return xcorr
 
-
 def myinterp(v, Np):
     v2 = np.arange(0, len(v) - 1, 1)
     Npv = np.arange(0, Np, 1)
