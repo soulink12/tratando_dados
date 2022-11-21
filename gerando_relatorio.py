@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import matplotlib
 import numpy as np
 import pandas as pd
 import os
@@ -62,6 +63,7 @@ def processar_dados_cisalhante(path):
                     sinal_original, sinal_modificado, primeiro_pico, tempo_propagacao, freq, dominio, \
                     primeira_freq_caracteristica = gerar_dados(path_cisalhante + i + r"\\" + j + r"\\" + z)
                     tempos_propagacao_lista.append(tempo_propagacao)
+                    #plot_signal(sinal_modificado)
                     primeira_freq_caracteristica_lista.append(primeira_freq_caracteristica)
                     pbar.update(1)
                 dsFreqAngulo['freq'] = freq[0:400]
@@ -72,6 +74,21 @@ def processar_dados_cisalhante(path):
             salvar_dados(tempos_propagacao_medio_lista, primeiras_freqs_caracteristicas_media_lista, path_cisalhante, i)
             print('\n' + 'Dados da pasta ' + str(i) + ' salvos com sucesso!')
     #criar_graficos_cisalhante(path_cisalhante)
+
+def plot_signal(sinal_original):
+    tempo = np.arange(0, len(sinal_original), 1) * 0.0000000004
+    font = {'family': 'normal',
+            'size': 22}
+    matplotlib.rc('font', **font)
+    plt.figure(figsize=(19, 10))
+    plt.plot(tempo, sinal_original, linewidth=0.3, color = 'black')
+    plt.ylim(-0.04, 0.04)
+    plt.xlim(-0.0000000004 * 10000, 0.0000000004 * len(sinal_original)/2 + 0.0000000004 * 10000)
+    plt.ticklabel_format(style='sci', axis='x', scilimits=(0, 0))
+    plt.ylabel('Amplitude')
+    plt.xlabel('Tempo')
+    plt.savefig('teste.svg', bbox_inches='tight', format = 'svg')
+    plt.show()
 
 def criar_graficos_cisalhante(path):
     pastas = next(os.walk(path))[1]

@@ -14,7 +14,7 @@ class Sinal:
         self.sinal = np.array(sinal['sinal_original'])
 
         self.inicio = self.detectar_comprimento(self.sinal)
-        self.sinal_modificado = self.criar_sinal_modificado(self.sinal, self.inicio, 0.23)
+        self.sinal_modificado = self.criar_sinal_modificado(self.sinal, self.inicio, 0.05)
         self.primeiro_pico, _ = self.isolar_picos(self.sinal_modificado, 0)
 
         self.freq, self.dominio, self.primeira_freq_caracteristica = self.calcular_frequencia_caracteristica(
