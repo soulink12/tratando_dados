@@ -15,10 +15,9 @@ class Sinal:
 
         self.inicio = self.detectar_comprimento(self.sinal)
         self.sinal_modificado = self.criar_sinal_modificado(self.sinal, self.inicio, 0.23)
-        self.primeiro_pico, _ = self.isolar_picos(self.sinal_modificado, 0)
+        #self.primeiro_pico, _ = self.isolar_picos(self.sinal_modificado, 0)
 
-        self.freq, self.dominio, self.primeira_freq_caracteristica = self.calcular_frequencia_caracteristica(
-            self.primeiro_pico)
+        #self.freq, self.dominio, self.primeira_freq_caracteristica = self.calcular_frequencia_caracteristica(self.primeiro_pico)
 
     @staticmethod
     def detectar_comprimento(sinal):
@@ -34,9 +33,9 @@ class Sinal:
     def criar_sinal_modificado(self, sinal, inicio, db):
         sinal_modificado = self.remover_pico_inicial(sinal, inicio)
         sinal_modificado = self.arredondando_para_zero(sinal_modificado)
-        sinal_modificado = self.filtrando_band_pass(sinal_modificado, 2.0e6, 8.0e6, self.fs, order=9)
         self.tempo_propagacao = self.calcular_tempo_propagacao(sinal_modificado, self.inicio)
-        sinal_modificado = self.removendo_amplitude(sinal_modificado, db)
+        #sinal_modificado = self.filtrando_band_pass(sinal_modificado, 2.0e6, 8.0e6, self.fs, order=9)
+        #sinal_modificado = self.removendo_amplitude(sinal_modificado, db)
         return sinal_modificado
 
     def calcular_tempo_propagacao(self, sinal, inicio):

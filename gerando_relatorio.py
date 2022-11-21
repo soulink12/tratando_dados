@@ -10,12 +10,10 @@ def gerar_dados(sinal_path):
     sinal = Sinal(sinal_path)
     sinal_original = sinal.sinal
     sinal_modificado = sinal.sinal_modificado
-    primeiro_pico = sinal.primeiro_pico
-    freq, dominio, primeira_freq_caracteristica = sinal.freq, sinal.dominio, sinal.primeira_freq_caracteristica
     tempo_propagacao = sinal.tempo_propagacao
 
-    return sinal_original, sinal_modificado, primeiro_pico, tempo_propagacao, freq, dominio, \
-           primeira_freq_caracteristica
+    return sinal_original, sinal_modificado, tempo_propagacao
+
 
 def salvar_dados(tempo_propagacao, primeira_freq_caracteristica, path, nome_arquivo):
     with open(path + str(nome_arquivo) + '.txt', 'w') as arquivo:
@@ -50,7 +48,6 @@ def processar_dados_cisalhante(path):
     with tqdm.tqdm(total=numero_de_arquivos) as pbar:
         for i in pastas:
             tempos_propagacao_medio_lista = []
-            primeiras_freqs_caracteristicas_media_lista = []
             pasta_raiz = next(os.walk(path_cisalhante + i))[0]
             pastas_da_pasta = next(os.walk(path_cisalhante + i))[1]
             dsFreqAngulo = pd.DataFrame()
@@ -59,29 +56,15 @@ def processar_dados_cisalhante(path):
                 tempos_propagacao_lista = []
                 primeira_freq_caracteristica_lista = []
                 for z in arquivos_da_pasta:
-                    sinal_original, sinal_modificado, primeiro_pico, tempo_propagacao, freq, dominio, \
-                    primeira_freq_caracteristica = gerar_dados(path_cisalhante + i + r"\\" + j + r"\\" + z)
+                    sinal_original, sinal_modificado, tempo_propagacao = gerar_dados(path_cisalhante + i + r"\\" + j + r"\\" + z)
                     tempos_propagacao_lista.append(tempo_propagacao)
-                    primeira_freq_caracteristica_lista.append(primeira_freq_caracteristica)
                     pbar.update(1)
-                dsFreqAngulo['freq'] = freq[0:400]
-                dsFreqAngulo[str((int(j) - 1) * 11.25)] = dominio[0:400]
                 tempos_propagacao_medio_lista.append(np.mean(tempos_propagacao_lista))
-                primeiras_freqs_caracteristicas_media_lista.append(np.mean(primeira_freq_caracteristica_lista))
-            dsFreqAngulo.to_csv(path_cisalhante + i + r'_freq.csv', sep=',', encoding='windows-1252')
-            salvar_dados(tempos_propagacao_medio_lista, primeiras_freqs_caracteristicas_media_lista, path_cisalhante, i)
+            #dsFreqAngulo.to_csv(path_cisalhante + i + r'_freq.csv', sep=',', encoding='windows-1252')
+            salvar_tempo(tempos_propagacao_medio_lista, path_cisalhante, i)
             print('\n' + 'Dados da pasta ' + str(i) + ' salvos com sucesso!')
     #criar_graficos_cisalhante(path_cisalhante)
 
-def criar_graficos_cisalhante(path):
-    pastas = next(os.walk(path))[1]
-    n_pastas = len(pastas)
-    for i in range(n_pastas):
-        fig = plt.figure(figsize=(16, 10))
-        dados = pd.read_csv(path + str(i + 1) + '.txt', sep='\t', encoding='windows-1252')
-        plt.plot(dados['Ângulo'], dados['Tempo de Propagação'], label=pastas[i])
-        plt.legend()
-        plt.show()
 
 def processar_dados_compressivo(path):
     # Processando os arquivos individuais de cada pasta e salvando os dados em um arquivo txt.
