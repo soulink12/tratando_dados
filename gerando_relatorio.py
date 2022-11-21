@@ -97,7 +97,7 @@ def processar_dados_compressivo(path):
             print('\n' + 'Dados da pasta ' + str(i) + ' salvos com sucesso!')
 
 
-path = r'D:\\medicoes\\AMOSTRA S12\\boleto\\'
+path = r'AMOSTRA S06\\boleto\\'
 
 processar_dados_cisalhante(path)
 #processar_dados_compressivo(path)

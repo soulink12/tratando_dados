@@ -1,6 +1,7 @@
 import numpy as np
 from numpy.fft import fft, ifft
 from scipy.interpolate import interp1d
+import matplotlib.pyplot as plt
 
 def MYXCORR(A, B):
     T = len(A)
@@ -28,17 +29,12 @@ def myinterp(v, Np):
 
 
 def calculation(scaled_wave, tscale):
-    escal = len(scaled_wave)
-    y1 = scaled_wave[0:int(escal/2)]
-    y2 = scaled_wave[int(escal/2):escal]
-    #y1INT = myinterp(y1, 16)
-    #y2INT = myinterp(y2, 16)
-    time_vector = np.arange(1,len(scaled_wave)+1, 1) * (tscale / 16)
+    time_vector = np.arange(0,len(scaled_wave), 1) * tscale
+    new_time_vector = np.arange(0, len(scaled_wave)-1, 0.0625) * tscale
     fy = interp1d(time_vector, scaled_wave, kind='cubic')
-    y1INT = fy(time_vector[0:int(len(time_vector)/2)])
-    y2INT = fy(time_vector[int(len(time_vector)/2):len(time_vector)])
-
+    y1INT = fy(new_time_vector[0:int(len(new_time_vector)/2)])
+    y2INT = fy(new_time_vector[int(len(new_time_vector)/2):len(new_time_vector)])
     c2 = MYXCORR(y2INT, y1INT)
     diff = np.argmax(c2)
-    tempo = time_vector[diff]
+    tempo = new_time_vector[diff]
     return tempo
