@@ -13,10 +13,10 @@ class Sinal:
         sinal = pd.read_table(sinal_path, header=None, decimal=',', names=["sinal_original"])
         self.sinal = np.array(sinal['sinal_original'])
 
-        inicio = self.detectar_comprimento(self.sinal)
-        self.sinal_modificado = self.criar_sinal_modificado(self.sinal, inicio, 0.35)
+        self.inicio = self.detectar_comprimento(self.sinal)
+        self.sinal_modificado = self.criar_sinal_modificado(self.sinal, self.inicio, 0.23)
         self.primeiro_pico, _ = self.isolar_picos(self.sinal_modificado, 0)
-        self.tempo_propagacao = self.calcular_tempo_propagacao(self.sinal_modificado, inicio)
+
         self.freq, self.dominio, self.primeira_freq_caracteristica = self.calcular_frequencia_caracteristica(
             self.primeiro_pico)
 
@@ -34,8 +34,9 @@ class Sinal:
     def criar_sinal_modificado(self, sinal, inicio, db):
         sinal_modificado = self.remover_pico_inicial(sinal, inicio)
         sinal_modificado = self.arredondando_para_zero(sinal_modificado)
-        sinal_modificado = self.filtrando_band_pass(sinal_modificado, 3.0e6, 7.0e6, self.fs, order=9)
-        #sinal_modificado = self.removendo_amplitude(sinal_modificado, db)
+        sinal_modificado = self.filtrando_band_pass(sinal_modificado, 2.0e6, 8.0e6, self.fs, order=9)
+        self.tempo_propagacao = self.calcular_tempo_propagacao(sinal_modificado, self.inicio)
+        sinal_modificado = self.removendo_amplitude(sinal_modificado, db)
         return sinal_modificado
 
     def calcular_tempo_propagacao(self, sinal, inicio):
@@ -52,16 +53,19 @@ class Sinal:
         return tempo_propagacao
 
     def calcular_frequencia_caracteristica(self, sinal):
-        sinalPlus = np.append(sinal, np.zeros(len(sinal) * 20))
+        sinalPlus = np.append(sinal, np.zeros(len(sinal) * 10))
         n = len(sinalPlus)
         fr = np.fft.rfftfreq(n, self.xinterval)
-        X = 2 / n * np.abs(np.fft.fft(sinalPlus))
-        plt.plot(fr,X[:len(fr)])
+        Y = 2 / n * np.abs(np.fft.fft(sinalPlus))
+        '''
+        plt.clf()
+        plt.plot(fr,Y[:len(fr)])
         plt.xlim(0, 1e7)
         plt.show()
         plt.close()
-        primeira_freq_caracteristica = fr[np.argmax(X[:len(fr)])]
-        return fr, X[:len(fr)], primeira_freq_caracteristica
+        '''
+        primeira_freq_caracteristica = fr[np.argmax(Y[:len(fr)])]
+        return fr, Y[:len(fr)], primeira_freq_caracteristica
 
     def filtrando_band_pass(self, sinal, lowcut, highcut, fs, order=5):
         y = self.butter_bandpass_filter(sinal, lowcut, highcut, fs, order=order)
