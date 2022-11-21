@@ -15,10 +15,9 @@ class Sinal:
 
         self.inicio = self.detectar_comprimento(self.sinal)
         self.sinal_modificado = self.criar_sinal_modificado(self.sinal, self.inicio, 0.05)
-        self.primeiro_pico, _ = self.isolar_picos(self.sinal_modificado, 0)
-
+        self.pico_isolado, _ = self.selecionar_maior_pico(self.sinal_modificado)
         self.freq, self.dominio, self.primeira_freq_caracteristica = self.calcular_frequencia_caracteristica(
-            self.primeiro_pico)
+            self.pico_isolado)
 
     @staticmethod
     def detectar_comprimento(sinal):
@@ -118,3 +117,16 @@ class Sinal:
         else:
             pico_isolado = sinal[0:indice_valor_max + range_valores]
         return pico_isolado, indice_valor_max
+
+    def selecionar_maior_pico(self, sinal):
+        pico_max = np.argmax(sinal)
+        eh_pico_maximo = True
+        i=0
+        while eh_pico_maximo:
+            pico_isolado, indice_valor_max = self.isolar_picos(sinal, i)
+            if indice_valor_max ==  pico_max:
+                eh_pico_maximo = False
+                return pico_isolado, indice_valor_max
+            else:
+                i += 1
+

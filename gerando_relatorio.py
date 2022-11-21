@@ -11,7 +11,7 @@ def gerar_dados(sinal_path):
     sinal = Sinal(sinal_path)
     sinal_original = sinal.sinal
     sinal_modificado = sinal.sinal_modificado
-    primeiro_pico = sinal.primeiro_pico
+    primeiro_pico = sinal.pico_isolado
     freq, dominio, primeira_freq_caracteristica = sinal.freq, sinal.dominio, sinal.primeira_freq_caracteristica
     tempo_propagacao = sinal.tempo_propagacao
 
