@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import matplotlib
-import cupy as np
+import numpy as np
 import pandas as pd
 import os
 import tqdm
@@ -131,7 +131,7 @@ def processar_dados_compressivo(path):
             print('\n' + 'Dados da pasta ' + str(i) + ' salvos com sucesso!')
 
 
-path = r'D:\medicoes\bloco padrao\\'
+path = r'D:\medicoes\AMOSTRA S06\boleto\\'
 
 processar_dados_cisalhante(path)
 #processar_dados_compressivo(path)

@@ -78,7 +78,6 @@ class Sinal:
         return sos
 
     def butter_bandpass_filter(self, data, lowcut, highcut, fs, order=5):
-        data = data.get()
         sos = self.butter_bandpass(lowcut, highcut, fs, order=order)
         y = sosfilt(sos, data)
         return y
@@ -97,7 +96,6 @@ class Sinal:
     @staticmethod
     def removendo_amplitude(sinal, queda_percentual):
         amplitude = max(sinal)
-        print(sinal.device)
         amplitude_max = amplitude * queda_percentual
         dbLoss = 20 * np.log10(amplitude / amplitude_max)
         dbArray = 20 * np.log10(sinal / amplitude)
