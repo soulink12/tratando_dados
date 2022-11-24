@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import matplotlib
-import numpy as np
+import cupy as np
 import pandas as pd
 import os
 import tqdm
@@ -66,8 +66,8 @@ def processar_dados_cisalhante(path):
                     #plot_signal(sinal_modificado)
                     primeira_freq_caracteristica_lista.append(primeira_freq_caracteristica)
                     pbar.update(1)
-                dsFreqAngulo['freq'] = freq[0:400]
-                dsFreqAngulo[str((int(j) - 1) * 11.25)] = dominio[0:400]
+                dsFreqAngulo['freq'] = freq[0:1600]
+                dsFreqAngulo[str((int(j) - 1) * 11.25)] = dominio[0:1600]
                 tempos_propagacao_medio_lista.append(np.mean(tempos_propagacao_lista))
                 primeiras_freqs_caracteristicas_media_lista.append(np.mean(primeira_freq_caracteristica_lista))
             dsFreqAngulo.to_csv(path_cisalhante + i + r'_freq.csv', sep=',', encoding='windows-1252')
@@ -131,7 +131,7 @@ def processar_dados_compressivo(path):
             print('\n' + 'Dados da pasta ' + str(i) + ' salvos com sucesso!')
 
 
-path = r'D:\\medicoes\\AMOSTRA S12\\boleto\\'
+path = r'D:\medicoes\bloco padrao\\'
 
 processar_dados_cisalhante(path)
 #processar_dados_compressivo(path)
