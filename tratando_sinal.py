@@ -11,7 +11,7 @@ class Sinal:
         self.fs = 2.5e9
         self.xinterval = 1 / self.fs
         sinal = pd.read_table(sinal_path, header=None, decimal=',', names=["sinal_original"])
-        self.sinal = cp.array(sinal['sinal_original'])
+        self.sinal = np.array(sinal['sinal_original'])
         self.inicio = self.detectar_comprimento(self.sinal)
         self.sinal_modificado = self.criar_sinal_modificado(self.sinal, self.inicio, 0.05)
         self.pico_isolado, _ = self.selecionar_maior_pico(self.sinal_modificado, self.inicio)
@@ -40,7 +40,7 @@ class Sinal:
     def calcular_tempo_propagacao(self, sinal, inicio):
         _, indice_valor_max0 = self.isolar_picos(sinal, inicio, 0)
         _, indice_valor_max1 = self.isolar_picos(sinal, inicio, 1)
-        intervalo = int(cp.floor(inicio/2))
+        intervalo = int(np.floor(inicio/2))
         if(indice_valor_max0 >= intervalo):
             sinal_cortado = sinal[indice_valor_max0 - intervalo:indice_valor_max1 + intervalo]
         else:
@@ -51,10 +51,10 @@ class Sinal:
         return tempo_propagacao
 
     def calcular_frequencia_caracteristica(self, sinal):
-        sinalPlus = cp.append(sinal, cp.zeros(len(sinal) * 10))
+        sinalPlus = np.append(sinal, np.zeros(len(sinal) * 10))
         n = len(sinalPlus)
-        fr = cp.fft.rfftfreq(n, self.xinterval)
-        Y = 2 / n * cp.abs(cp.fft.fft(sinalPlus))
+        fr = np.fft.rfftfreq(n, self.xinterval)
+        Y = 2 / n * np.abs(np.fft.fft(sinalPlus))
         '''
         plt.clf()
         plt.plot(fr,Y[:len(fr)])
@@ -62,12 +62,12 @@ class Sinal:
         plt.show()
         plt.close()
         '''
-        primeira_freq_caracteristica = fr[cp.argmax(Y[:len(fr)])]
+        primeira_freq_caracteristica = fr[np.argmax(Y[:len(fr)])]
         return fr, Y[:len(fr)], primeira_freq_caracteristica
 
     def filtrando_band_pass(self, sinal, lowcut, highcut, fs, order=5):
         y = self.butter_bandpass_filter(sinal, lowcut, highcut, fs, order=order)
-        y = cp.array(y)
+        y = np.array(y)
         return y
 
     def butter_bandpass(self, lowcut, highcut, fs, order=5):
@@ -99,10 +99,10 @@ class Sinal:
         amplitude = max(sinal)
         print(sinal.device)
         amplitude_max = amplitude * queda_percentual
-        dbLoss = 20 * cp.log10(amplitude / amplitude_max)
-        dbArray = 20 * cp.log10(sinal / amplitude)
+        dbLoss = 20 * np.log10(amplitude / amplitude_max)
+        dbArray = 20 * np.log10(sinal / amplitude)
         #sinal_sem_ruido = np.array([0 if abs(20 * np.log10(abs(sinal[i])/amplitude)) >= dbLoss else sinal[i] for i in np.arange(0, len(sinal), 1)])
-        for i in cp.arange(0, len(sinal), 1):
+        for i in np.arange(0, len(sinal), 1):
             if dbArray[i] >= dbLoss:
                 sinal[i] = 0
         return sinal
@@ -110,12 +110,12 @@ class Sinal:
     @staticmethod
     def isolar_picos(sinal, inicio, numero_do_pico):
         range_valores = int(inicio/2)
-        indice_valor_max = cp.argmax(sinal)
+        indice_valor_max = np.argmax(sinal)
         i = 0
         k = 0
         while i <= numero_do_pico:
             lim_max = indice_valor_max + range_valores * k
-            indice_valor_max = lim_max + cp.argmax(sinal[lim_max:])
+            indice_valor_max = lim_max + np.argmax(sinal[lim_max:])
             k = 1
             i += 1
         if(indice_valor_max >= range_valores):
@@ -125,7 +125,7 @@ class Sinal:
         return pico_isolado, indice_valor_max
 
     def selecionar_maior_pico(self, sinal, inicio):
-        pico_max = cp.argmax(sinal)
+        pico_max = np.argmax(sinal)
         eh_pico_maximo = True
         i=0
         while eh_pico_maximo:
