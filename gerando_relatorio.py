@@ -6,7 +6,6 @@ import os
 import tqdm
 from tratando_sinal import Sinal
 
-
 def gerar_dados(sinal_path):
     sinal = Sinal(sinal_path)
     sinal_original = sinal.sinal
@@ -131,7 +130,7 @@ def processar_dados_compressivo(path):
             print('\n' + 'Dados da pasta ' + str(i) + ' salvos com sucesso!')
 
 
-path = r'D:\medicoes\AMOSTRA S06\boleto\\'
+path = r'C:\Users\souli\OneDrive\Trabalho\UFPA\Mestrado\Trabalho\processando_resultados\py\AMOSTRA S06\boleto\\'
 
 processar_dados_cisalhante(path)
 #processar_dados_compressivo(path)

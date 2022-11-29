@@ -3,19 +3,28 @@ import cupy as cp
 from cupy.fft import fft, ifft
 from scipy.interpolate import interp1d
 
+
+mempool = cp.get_default_memory_pool()
+pinned_mempool = cp.get_default_pinned_memory_pool()
+
+cache = cp.fft.config.get_plan_cache()
+
 def MYXCORR(A, B):
-    A = cp.array(A)
-    B = cp.array(B)
-    T = len(A)
-    C = cp.zeros_like(A)
-    Va = cp.hstack((C, A, C))
-    Vb = cp.hstack((B, C, C))
+    Ac = cp.array(A)
+    Bc = cp.array(B)
+    T = len(Ac)
+    C = cp.zeros_like(Ac)
+    Va = cp.hstack((C, Ac, C))
+    Vb = cp.hstack((Bc, C, C))
     AF = fft(Va)
     BF = fft(Vb)
     corr = cp.real(ifft(AF * cp.conj(BF)))
     xcorr = corr[1:2 * T]
-    xcorr = xcorr.get()
-    return xcorr
+    xcorrCPU = xcorr.get()
+    mempool.free_all_blocks()
+    pinned_mempool.free_all_blocks()
+    cache.clear()
+    return xcorrCPU
 
 def myinterp(v, Np):
     v2 = np.arange(0, len(v) - 1, 1)

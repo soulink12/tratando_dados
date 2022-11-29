@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-import cupy as cp
 import matplotlib.pyplot as plt
 import mathmate as mm
 from scipy.signal import butter, sosfilt, sosfreqz
