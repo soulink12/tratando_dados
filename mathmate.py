@@ -6,7 +6,6 @@ from scipy.interpolate import interp1d
 
 mempool = cp.get_default_memory_pool()
 pinned_mempool = cp.get_default_pinned_memory_pool()
-
 cache = cp.fft.config.get_plan_cache()
 
 def MYXCORR(A, B):
