@@ -12,12 +12,12 @@ def gerar_dados(sinal_path):
     sinal_original = sinal.sinal
     sinal_modificado = sinal.sinal_modificado
     primeiro_pico = sinal.pico_isolado
-    freq, dominio, primeira_freq_caracteristica = sinal.freq, sinal.dominio, sinal.primeira_freq_caracteristica
+    amplitude, freq_amplitude, primeira_freq_caracteristica = sinal.amplitude, sinal.freq_amplitude, sinal.primeira_freq_caracteristica
     tempo_propagacao = sinal.tempo_propagacao
-    freq_fase, fase = sinal.espectro_de_fase(sinal_modificado)
+    phase, freq_phase = sinal.phase, sinal.freq_phase
 
-    return sinal_original, sinal_modificado, primeiro_pico, tempo_propagacao, freq, dominio, \
-        primeira_freq_caracteristica, freq_fase, fase
+    return sinal_original, sinal_modificado, primeiro_pico, tempo_propagacao, amplitude, freq_amplitude, \
+        primeira_freq_caracteristica, freq_phase, phase
 
 
 def salvar_dados_angulo(tempo_propagacao, primeira_freq_caracteristica, path, nome_arquivo, angulo):
@@ -50,8 +50,8 @@ def processar_dados_cisalhante(path):
     # Funcina apenas para a pasta cisalhante
 
     path_cisalhante = path
-    pastas = sorted(next(os.walk(path_cisalhante))[1], key=int)
-    #pastas = next(os.walk(path_cisalhante))[1]
+    #pastas = sorted(next(os.walk(path_cisalhante))[1], key=int)
+    pastas = next(os.walk(path_cisalhante))[1]
     numero_de_arquivos = contar_arquivos(path_cisalhante)
 
     with tqdm.tqdm(total=numero_de_arquivos) as pbar:
@@ -67,16 +67,16 @@ def processar_dados_cisalhante(path):
                 primeira_freq_caracteristica_lista = []
                 if not len(arquivos_da_pasta) == 0:
                     for arquivo in arquivos_da_pasta:
-                        sinal_original, sinal_modificado, primeiro_pico, tempo_propagacao, freq, dominio, \
+                        sinal_original, sinal_modificado, primeiro_pico, tempo_propagacao, amplitude, freq_amplitude, \
                             primeira_freq_caracteristica, freq_fase, fase = gerar_dados(
                             path_cisalhante + i + r"\\" + angulo + r"\\" + arquivo)
                         tempos_propagacao_lista.append(tempo_propagacao)
                         primeira_freq_caracteristica_lista.append(primeira_freq_caracteristica)
                         pbar.update(1)
-                dsPhaseAngulo['freq'] = freq_fase[0:1600]
-                dsFreqAngulo['freq'] = freq[0:1600]
-                dsPhaseAngulo[str((int(angulo) - 1) * 11.25)] = fase[0:1600]
-                dsFreqAngulo[str((int(angulo) - 1) * 11.25)] = dominio[0:1600]
+                dsPhaseAngulo['freq'] = freq_fase[0:361]
+                dsFreqAngulo['freq'] = freq_amplitude[0:401]
+                dsPhaseAngulo[str((int(angulo) - 1) * 11.25)] = fase[0:361]
+                dsFreqAngulo[str((int(angulo) - 1) * 11.25)] = amplitude[0:401]
                 tempos_propagacao_medio_lista.append(np.mean(tempos_propagacao_lista))
                 primeiras_freqs_caracteristicas_media_lista.append(np.mean(primeira_freq_caracteristica_lista))
             if not np.isnan(tempos_propagacao_medio_lista[0]):
@@ -86,13 +86,40 @@ def processar_dados_cisalhante(path):
                 VoltRelation = VoltMaxList / VoltMax
                 for j in range(len(VoltRelation)):
                     dsFreqAngulo.iloc[:, j + 1] = dsFreqAngulo.iloc[:, j + 1] / VoltRelation[j]
+
+                dsDiferencaFase = pd.DataFrame()
+                '''
+                dsDiferencaFase['freq'] = calcular_diferenca_fase(dsPhaseAngulo, 11.25)['freq']
+                for angulo in np.arange(0, 101.25, 11.25):
+                    dsDiferencaFase[str(angulo) + ' - ' + str(angulo + 90)] = calcular_diferenca_fase(dsPhaseAngulo, angulo)[str(angulo)]
+
+                dsDiferencaFase.to_csv(path_cisalhante + i + r'_dif_phase.csv', sep=',', encoding='windows-1252')
+                '''
                 dsPhaseAngulo.to_csv(path_cisalhante + i + r'_phase.csv', sep=',', encoding='windows-1252')
                 dsFreqAngulo.to_csv(path_cisalhante + i + r'_freq.csv', sep=',', encoding='windows-1252')
+
                 salvar_dados_angulo(tempos_propagacao_medio_lista, primeiras_freqs_caracteristicas_media_lista,
                                     path_cisalhante, i, 11.25)
                 print('\n' + 'Dados da pasta ' + str(i) + ' salvos com sucesso!')
     # criar_graficos_cisalhante(path_cisalhante)
 
+
+#tirar o maior e o menor e tirar a média do restante, retornar apenas uma diferença de fase,
+# mas incluir cada uma das diferenças de fase
+def calcular_diferenca_fase(fase_database, angulo):
+    fase_database = fase_database.set_index('freq',inplace=False)
+    freqs_a_serem_usadas = [4.25e6, 4.5e6, 4.75e6, 5.0e6, 5.25e6, 5.5e6, 5.75e6]
+    diferencas_de_fase = []
+    for freq in freqs_a_serem_usadas:
+        fase_frequencia = fase_database.loc[freq]
+        fase_1 = fase_frequencia[str(float(angulo))]
+        fase_2 = fase_frequencia[str(float(angulo + 90))]
+        diferenca = fase_1 - fase_2
+        diferencas_de_fase.append(diferenca)
+    diferencas_de_fase_database = pd.DataFrame(columns=["freq", str(angulo)])
+    diferencas_de_fase_database["freq"] = freqs_a_serem_usadas
+    diferencas_de_fase_database[str(angulo)] = diferencas_de_fase
+    return diferencas_de_fase_database
 
 def plot_signal(sinal_original):
     tempo = np.arange(0, len(sinal_original), 1) * 0.0000000004
@@ -154,7 +181,7 @@ def processar_dados_compressivo(path):
             print('\n' + 'Dados da pasta ' + str(i) + ' salvos com sucesso!')
 
 
-path = r'C:\Users\souli\OneDrive\Trabalho\UFPA\Mestrado\Trabalho\medições\ultrassom\chapa g1\cisalhante\L1\\'
+path = r'C:\Users\souli\OneDrive\Trabalho\UFPA\Mestrado\Trabalho\medições\ultrassom\acustoelasticidade\1\cisalhante\\'
 
 processar_dados_cisalhante(path)
 #processar_dados_compressivo(path)
