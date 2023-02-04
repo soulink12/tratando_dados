@@ -14,7 +14,7 @@ class Sinal:
         sinal = pd.read_table(sinal_path, header=None, decimal=',', names=["sinal_original"])
         self.sinal = np.array(sinal['sinal_original'])
         self.inicio = self.detectar_comprimento(self.sinal)
-        self.sinal_modificado = self.criar_sinal_modificado(self.sinal, self.inicio, 0.20)
+        self.sinal_modificado = self.criar_sinal_modificado(self.sinal, self.inicio, 0.2)
         self.pico_isolado, _ = self.selecionar_maior_pico(self.sinal_modificado, self.inicio)
         self.amplitude, self.freq_amplitude, self.primeira_freq_caracteristica = self.calcular_frequencia_caracteristica(
             self.pico_isolado)
@@ -60,6 +60,10 @@ class Sinal:
 
     def espectro_de_fase(self, sinal):
         phase, frequency, _ = pyplot.phase_spectrum(sinal, Fs=self.fs)
+        loc = 0
+        for i in frequency:
+            frequency[loc] = round(i)
+            loc += 1
         pyplot.cla()
         return phase, frequency
 
@@ -133,3 +137,10 @@ class Sinal:
                 i += 1
 
 #sinal = Sinal(r'C:\Users\souli\OneDrive\Trabalho\UFPA\Mestrado\Trabalho\medições\ultrassom\chapa g1\cisalhante\L1\1\1\0.txt')
+
+
+#phase, freq = sinal.espectro_de_fase(sinal.pico_isolado)
+#print(len(phase))
+#print(len(freq))
+#plt.plot(freq, phase)
+#plt.show()

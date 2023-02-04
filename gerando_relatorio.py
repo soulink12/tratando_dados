@@ -7,7 +7,7 @@ import tqdm
 from tratando_sinal import Sinal
 
 
-def gerar_dados(sinal_path):
+def gerar_dados_cisalhante(sinal_path):
     sinal = Sinal(sinal_path)
     sinal_original = sinal.sinal
     sinal_modificado = sinal.sinal_modificado
@@ -18,6 +18,22 @@ def gerar_dados(sinal_path):
 
     return sinal_original, sinal_modificado, primeiro_pico, tempo_propagacao, amplitude, freq_amplitude, \
         primeira_freq_caracteristica, freq_phase, phase
+
+def gerar_dados_compressivo(sinal_path):
+    sinal = Sinal(sinal_path)
+    sinal_original = sinal.sinal
+    sinal_modificado = sinal.sinal_modificado
+    primeiro_pico = sinal.pico_isolado
+    segundo_pico = sinal.isolar_picos(sinal_modificado, 10000,  1)[0]
+    amplitude1, freq_amplitude1, primeira_freq_caracteristica1 = sinal.calcular_frequencia_caracteristica(primeiro_pico)
+    amplitude2, freq_amplitude2, primeira_freq_caracteristica2 = sinal.calcular_frequencia_caracteristica(segundo_pico)
+    phase1, freq_phase1 = sinal.espectro_de_fase(primeiro_pico)
+    phase2, freq_phase2 = sinal.espectro_de_fase(segundo_pico)
+    tempo_propagacao = sinal.tempo_propagacao
+
+    return sinal_original, sinal_modificado, primeiro_pico, segundo_pico,  tempo_propagacao, amplitude1,\
+        freq_amplitude1, amplitude2, freq_amplitude2, primeira_freq_caracteristica1,\
+        primeira_freq_caracteristica2, phase1, freq_phase1, phase2, freq_phase2
 
 
 def salvar_dados_angulo(tempo_propagacao, primeira_freq_caracteristica, path, nome_arquivo, angulo):
@@ -65,17 +81,20 @@ def processar_dados_cisalhante(path):
                 arquivos_da_pasta = next(os.walk(path_cisalhante + i + r"\\" + angulo))[2]
                 tempos_propagacao_lista = []
                 primeira_freq_caracteristica_lista = []
+                faseDF = pd.DataFrame()
                 if not len(arquivos_da_pasta) == 0:
+                    #isolar dois ecos consecutivos com seus respectivos tempos no índice
                     for arquivo in arquivos_da_pasta:
                         sinal_original, sinal_modificado, primeiro_pico, tempo_propagacao, amplitude, freq_amplitude, \
-                            primeira_freq_caracteristica, freq_fase, fase = gerar_dados(
+                            primeira_freq_caracteristica, freq_fase, fase = gerar_dados_cisalhante(
                             path_cisalhante + i + r"\\" + angulo + r"\\" + arquivo)
+                        faseDF[arquivo] = fase
                         tempos_propagacao_lista.append(tempo_propagacao)
                         primeira_freq_caracteristica_lista.append(primeira_freq_caracteristica)
                         pbar.update(1)
-                dsPhaseAngulo['freq'] = freq_fase[0:361]
+                dsPhaseAngulo['freq'] = freq_fase[0:]
                 dsFreqAngulo['freq'] = freq_amplitude[0:401]
-                dsPhaseAngulo[str((int(angulo) - 1) * 11.25)] = fase[0:361]
+                dsPhaseAngulo[str((int(angulo) - 1) * 11.25)] = faseDF.mean(axis=1)[0:]
                 dsFreqAngulo[str((int(angulo) - 1) * 11.25)] = amplitude[0:401]
                 tempos_propagacao_medio_lista.append(np.mean(tempos_propagacao_lista))
                 primeiras_freqs_caracteristicas_media_lista.append(np.mean(primeira_freq_caracteristica_lista))
@@ -103,23 +122,6 @@ def processar_dados_cisalhante(path):
                 print('\n' + 'Dados da pasta ' + str(i) + ' salvos com sucesso!')
     # criar_graficos_cisalhante(path_cisalhante)
 
-
-#tirar o maior e o menor e tirar a média do restante, retornar apenas uma diferença de fase,
-# mas incluir cada uma das diferenças de fase
-def calcular_diferenca_fase(fase_database, angulo):
-    fase_database = fase_database.set_index('freq',inplace=False)
-    freqs_a_serem_usadas = [4.25e6, 4.5e6, 4.75e6, 5.0e6, 5.25e6, 5.5e6, 5.75e6]
-    diferencas_de_fase = []
-    for freq in freqs_a_serem_usadas:
-        fase_frequencia = fase_database.loc[freq]
-        fase_1 = fase_frequencia[str(float(angulo))]
-        fase_2 = fase_frequencia[str(float(angulo + 90))]
-        diferenca = fase_1 - fase_2
-        diferencas_de_fase.append(diferenca)
-    diferencas_de_fase_database = pd.DataFrame(columns=["freq", str(angulo)])
-    diferencas_de_fase_database["freq"] = freqs_a_serem_usadas
-    diferencas_de_fase_database[str(angulo)] = diferencas_de_fase
-    return diferencas_de_fase_database
 
 def plot_signal(sinal_original):
     tempo = np.arange(0, len(sinal_original), 1) * 0.0000000004
@@ -157,31 +159,52 @@ def processar_dados_compressivo(path):
     pastas = sorted(next(os.walk(path_compressivo))[1], key=int)
     #pastas = next(os.walk(path_compressivo))[1]
     numero_de_arquivos = contar_arquivos(path_compressivo)
-
     with tqdm.tqdm(total=numero_de_arquivos) as pbar:
+        tempos_propagacao_medio_lista = np.array([0])
         for i in pastas:
-            tempos_propagacao_medio_lista = []
-            primeiras_freqs_caracteristicas_media_lista = []
+
+            primeiras_freqs_caracteristicas_media_lista1 = []
+            primeiras_freqs_caracteristicas_media_lista2= []
             arquivos_da_pasta = next(os.walk(path_compressivo + i))[2]
             tempos_propagacao_lista = []
-            primeira_freq_caracteristica_lista = []
+            primeira_freq_caracteristica_lista1 = []
+            primeira_freq_caracteristica_lista2 = []
             dsFreq = pd.DataFrame()
+            dsPhase = pd.DataFrame()
+            dsPhase1 = pd.DataFrame()
+            dsPhase2 = pd.DataFrame()
             for arquivo in arquivos_da_pasta:
-                sinal_original, sinal_modificado, primeiro_pico, tempo_propagacao, freq, dominio, \
-                    primeira_freq_caracteristica, freq_fase, fase = gerar_dados(path_compressivo + i + r"\\" + arquivo)
+
+                sinal_original, sinal_modificado, primeiro_pico, segundo_pico, tempo_propagacao, amplitude1, \
+                    freq_amplitude1, amplitude2, freq_amplitude2, primeira_freq_caracteristica1, \
+                    primeira_freq_caracteristica2, phase1, freq_phase1, phase2, freq_phase2\
+                    = gerar_dados_compressivo(path_compressivo + i + r"\\" + arquivo)
+                dsPhase1[arquivo] = phase1
+                dsPhase2[arquivo] = phase2
                 tempos_propagacao_lista.append(tempo_propagacao)
-                primeira_freq_caracteristica_lista.append(primeira_freq_caracteristica)
+                primeira_freq_caracteristica_lista1.append(primeira_freq_caracteristica1)
+                primeira_freq_caracteristica_lista2.append(primeira_freq_caracteristica2)
                 pbar.update(1)
-            dsFreq['freq'] = freq[0:1600]
-            tempos_propagacao_medio_lista.append(np.mean(tempos_propagacao_lista))
-            primeiras_freqs_caracteristicas_media_lista.append(np.mean(primeira_freq_caracteristica_lista))
+
+            #tempos_propagacao_medio_lista.append(np.mean(tempos_propagacao_lista))
+            tempos_propagacao_medio_lista = np.vstack((tempos_propagacao_medio_lista, np.mean(tempos_propagacao_lista)))
+            dsPhase['freq'] = freq_phase1
+            dsPhase['phase1'] = dsPhase1.mean(axis=1)
+            dsPhase['phase2'] = dsPhase2.mean(axis=1)
+            dsFreq['freq'] = freq_amplitude1[0:1600]
+            primeiras_freqs_caracteristicas_media_lista1.append(np.mean(primeira_freq_caracteristica_lista1))
             dsFreq.to_csv(path_compressivo + i + r'_freq.csv', sep=',', encoding='windows-1252')
-            salvar_dados_angulo(tempos_propagacao_medio_lista, primeiras_freqs_caracteristicas_media_lista,
-                                path_compressivo, i, 11.25)
+            dsPhase.to_csv(path_compressivo + i + r'_phase.csv', sep=',', encoding='windows-1252')
+            #TODO: SALVAR AQUI EM BAIXO COM UM PANDAS
+            #salvar_dados_angulo(tempos_propagacao_medio_lista, primeiras_freqs_caracteristicas_media_lista1,
+            #                    path_compressivo, i, 11.25)
             print('\n' + 'Dados da pasta ' + str(i) + ' salvos com sucesso!')
+        dsTempoPropagacao = pd.DataFrame(tempos_propagacao_medio_lista[1:], columns=['Tempo de Propagação'])
+        dsTempoPropagacao.to_csv(path_compressivo + r'tempo_propagacao.csv', sep=',', encoding='windows-1252')
 
 
-path = r'C:\Users\souli\OneDrive\Trabalho\UFPA\Mestrado\Trabalho\medições\ultrassom\acustoelasticidade\1\cisalhante\\'
+
+path = r'C:\Users\souli\OneDrive\Trabalho\UFPA\Mestrado\Trabalho\medições\ultrassom\chapa g1\cisalhante\L1\\'
 
 processar_dados_cisalhante(path)
 #processar_dados_compressivo(path)
