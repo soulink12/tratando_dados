@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import sys
+import os
 
 sys.path.insert(1, r'C:\Users\souli\OneDrive\Trabalho\UFPA\Mestrado\Trabalho\processando_resultados\py')
 
@@ -23,16 +24,16 @@ def calcular_diferenca_fase(fasedb0, fasedb90):
         diferencas_de_fase[freq] = diferenca
     return diferencas_de_fase
 
-def calcular_diferenca_fase_angulo(pathFasedb):
+def calcular_diferenca_fase_angulo(pathFasedb, numero_de_pastas):
     diferencas_de_fase = pd.DataFrame()
     fasedb = pd.read_csv(pathFasedb, sep=',', encoding='windows-1252')
     fasedb = fasedb.set_index('freq', inplace=False)
     freqs_a_serem_usadas = [4.25e6, 4.5e6, 4.75e6, 5.0e6, 5.25e6, 5.5e6, 5.75e6]
-    numero_de_angulos = int(np.ceil(17 / 2))
+    numero_de_angulos = int(np.ceil(numero_de_pastas / 2))
     angulos_a_serem_usados = []
 
     for i in range(numero_de_angulos):
-        angulos_a_serem_usados.append(i*11.25)
+        angulos_a_serem_usados.append(i*5)
 
     for angulo in angulos_a_serem_usados:
 
@@ -47,22 +48,28 @@ def calcular_diferenca_fase_angulo(pathFasedb):
 
 def calcular_dtm_com_phase_path(pathDifFasedb, angulos_a_serem_usados):
     diferenca_de_fase_frequencia = pd.read_csv(pathDifFasedb, sep=',', encoding='windows-1252', index_col=0)
-    theta1 = angulos_a_serem_usados[0]
-    theta2 = angulos_a_serem_usados[1]
+    theta1 = angulos_a_serem_usados[5]
+    theta2 = angulos_a_serem_usados[15]
     dPhi1 = diferenca_de_fase_frequencia.loc[theta1]
     dPhi2 = diferenca_de_fase_frequencia.loc[theta2]
     dtmDF = pd.DataFrame()
     phi = 0
     dtmDF['angulos'] = [theta1, theta2]
-    for i in range(len(dPhi1)):
-        for freq in diferenca_de_fase_frequencia.columns[1:]:
-            dTm1, dTm2, phi = dTm_para_dois_angulos(dPhi1[i], dPhi2[i], theta1, theta2, float(freq))
-            dtmDF[freq] = [dTm1, dTm2]
+
+    for freq in diferenca_de_fase_frequencia.columns[1:]:
+        dTm1, dTm2, phi = dTm_para_dois_angulos(dPhi1[freq], dPhi2[freq], theta1, theta2, float(freq))
+        #print(dTm1, dTm2, phi)
+        dtmDF[freq] = [dTm1, dTm2]
     dtmDF['phi'] = [phi, phi]
     return dtmDF
 
 def calcular_phi(dPhi1, dPhi2, theta1, theta2):
-    phi = 1/2 * np.arctan((np.tan(dPhi1/2)*np.cos(2*theta2) - np.tan(dPhi2/2)*np.cos(2*theta1)) / (np.tan(dPhi2/2)*np.sin(2*theta1) - np.tan(dPhi1/2)*np.sin(2*theta2)))
+    P1 = np.tan(dPhi1/2)*np.cos(2*theta2)
+    P2 = np.tan(dPhi2/2)*np.cos(2*theta1)
+    P3 = np.tan(dPhi2/2)*np.sin(2*theta1)
+    P4 = np.tan(dPhi1/2)*np.sin(2*theta2)
+
+    phi = 1/2 * np.arctan((P1 - P2) / (P3 - P4))
     return phi
 
 def dTm_para_dois_angulos(dPhi1, dPhi2, theta1, theta2, freq):
@@ -96,11 +103,11 @@ def tratar_constante_parte_cisalhante():
     dTm_por_diferencas_de_fase_frequencia.to_csv(
         r'C:\Users\souli\OneDrive\Trabalho\UFPA\Mestrado\Trabalho\medições\ultrassom\acustoelasticidade\1\dTm.csv')
 
-def criar_difenca_fase(path, numero_de_pastas):
+def criar_difenca_fase(path, numero_de_pastas, numero_de_angulos):
     for i in range(numero_de_pastas + 1):
         path_phase = path + str(i) + r'_phase.csv'
         try:
-            diferenca_de_fase_frequencia = calcular_diferenca_fase_angulo(path_phase)
+            diferenca_de_fase_frequencia = calcular_diferenca_fase_angulo(path_phase, numero_de_angulos)
             diferenca_de_fase_frequencia.to_csv(path + str(i) + r'_dif_phase.csv')
         except:
             pass
@@ -114,13 +121,29 @@ def criar_dTm(path, numero_de_pastas, angulos):
         except:
             pass
 
+def ler_diferenca_tempo_dtm(path, numero_da_pasta, angulos, espessura, numero_da_onda):
+    path_diferenca = path + str(numero_da_pasta) + '.txt'
+    dtms_tempo=[]
+    dtms_tempo_angulo = pd.DataFrame()
+    if os.path.exists(path_diferenca):
+        dado = pd.read_csv(path_diferenca, index_col=0, sep='\t', encoding='windows-1252')
+        dado.drop(columns='Frequência Característica', inplace=True)
+        for angulo in angulos:
+                t1 = dado.loc[angulo]
+                t2 = dado.loc[angulo + 90]
+                Vt1 = 2 * espessura / t1
+                Vt2 = 2 * espessura / t2
+                dTm_tempo = ((Vt1 - Vt2) * 2 * numero_da_onda * espessura) / ((Vt1 + Vt2) / 2)**2
+                dTm_tempo = ((Vt1 - Vt2) * 2 * numero_da_onda * espessura) / (3172)**2
+                #dTm_tempo = dado.loc[angulo + 90] - dado.loc[angulo]
+                dtms_tempo.append(dTm_tempo[0])
+        if len(dtms_tempo) != 0:
+            dtms_tempo_angulo['dtm'] = dtms_tempo
+            dtms_tempo_angulo['Ângulo'] = angulos
+        return dtms_tempo_angulo
+    else:
+        return None
 
-
-#calcular_diferenca_fase_angulo(r'C:\Users\souli\OneDrive\Trabalho\UFPA\Mestrado\Trabalho\medições\ultrassom\chapa g1\cisalhante\L1\1_phase.csv')
-
-#calcular_dtm_com_phase_path(r'C:\Users\souli\OneDrive\Trabalho\UFPA\Mestrado\Trabalho\medições\ultrassom\chapa g1\cisalhante\L1\1_dif_phase.csv', [33.75, 56.25])
-
-#criar_dTm(path, numero_de_pastas, [33.75, 56.25])
 
 def calculando_constante(A, B, C, D, E):
     # A, B e C são ao parâmetros do plano
@@ -130,25 +153,24 @@ def calculando_constante(A, B, C, D, E):
     d5 = C
     d1 = D + d4
     d3 = E + d5
-    print(d1, d2, d3, d4, d5)
     return [d1, d2, d3, d4, d5]
 
 def s11s22(constantes, dTm, phi):
     d1, d2, d3, d4, d5 = constantes
     phi = np.deg2rad(phi)
-    s11s22 = (d1 - d4) * dTm * np.cos(2 * phi) + (d3 - d5)
+    s11s22 = (d1 - d4) * dTm * 10**6 * np.cos(2 * phi) + (d3 - d5)
     return s11s22
 
 def s11(constantes, dTm, t,  phi):
     d1, d2, d3, d4, d5 = constantes
     phi = np.deg2rad(phi)
-    s11 = d1 * dTm * np.cos(2 * phi) + d2 * 1/(t**2) + d3
+    s11 = d1 * dTm * 10**6 * np.cos(2 * phi) + d2 * 1/((t*10**6)**2) + d3
     return s11
 
 def s22(constantes, dTm, t,  phi):
     d1, d2, d3, d4, d5 = constantes
     phi = np.deg2rad(phi)
-    s22 = d4 * dTm * np.cos(2 * phi) + d2 * 1/(t**2) + d5
+    s22 = d4 * dTm * 10**6 * np.cos(2 * phi) + d2 * 1/((t*10**6)**2) + d5
     return s22
 
 def s12(constantes, dTm,  phi):
@@ -159,34 +181,45 @@ def s12(constantes, dTm,  phi):
 
 
 numero_de_pastas = 14
-path_cisalhante = r'C:\Users\souli\OneDrive\Trabalho\UFPA\Mestrado\Trabalho\medições\ultrassom\chapa g1\cisalhante\L1\\'
-path_tempo_propagacao_compressivo = r'C:\Users\souli\OneDrive\Trabalho\UFPA\Mestrado\Trabalho\medições\ultrassom\chapa g1\compressivo\L1\tempo_propagacao.csv'
-
-tempos_propagacao = pd.read_csv(path_tempo_propagacao_compressivo, index_col=0, sep=',', encoding='windows-1252')
-A = 2.13598
-B = 1
-C = -2.11664E11
-D = -5.12858E-17
-E = 3.0414E-8
-constantes = calculando_constante(A, B, C, D, E)
 
 
+def main():
+    angulos = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90]
+    path_cisalhante = r'C:\Users\souli\OneDrive\Trabalho\UFPA\Mestrado\Trabalho\medições\ultrassom\chapa g2-auto\cisalhante\L1\\'
+    path_tempo_propagacao_compressivo = r'C:\Users\souli\OneDrive\Trabalho\UFPA\Mestrado\Trabalho\medições\ultrassom\chapa g1\compressivo\L1\tempo_propagacao.csv'
 
-for i in range(numero_de_pastas + 1):
-    path_dtm = path_cisalhante + str(i) + r'_dtm.csv'
-    try:
-        dtm_freq = pd.read_csv(path_dtm, index_col=0, sep=',', encoding='windows-1252')
-        dtm = dtm_freq[str(5000000.0)][0]
-        phi = dtm_freq['phi'][0]
-        tempo_propagacao = tempos_propagacao.iloc[i-1][0]
-        S11S22 = s11s22(constantes, dtm, phi)
-        S11 = s11(constantes, dtm, tempo_propagacao, phi)
-        S22 = s22(constantes, dtm, tempo_propagacao, phi)
-        S12 = s12(constantes, dtm, phi)
-        #print(S11S22, S11, S22, S12)
-        #diferenca_de_fase_frequencia.to_csv(path_cisalhante + str(i) + r'_dif_phase.csv')
-    except Exception as e:
-        pass
+    criar_difenca_fase(path_cisalhante, numero_de_pastas, 37)
+    #calcular_dtm_com_phase_path(r'C:\Users\souli\OneDrive\Trabalho\UFPA\Mestrado\Trabalho\medições\ultrassom\chapa g2-auto\cisalhante\L1\7_dif_phase.csv', angulos)
+
+    criar_dTm(path_cisalhante, numero_de_pastas, angulos)
+    #dtm = ler_diferenca_tempo_dtm(
+        #r"C:\Users\souli\OneDrive\Trabalho\UFPA\Mestrado\Trabalho\medições\ultrassom\chapa g2-auto\cisalhante\L1\\", 7,
+        #angulos, 9.5 * 10**-3, 1)
+    tempos_propagacao = pd.read_csv(path_tempo_propagacao_compressivo, index_col=0, sep=',', encoding='windows-1252')
+    A = -5.46854E11
+    B = -1.62836E10
+    C = 5.49194E10
+    D = 2.13132E12
+    E = -2.11847E11
+    constantes = calculando_constante(A, B, C, D, E)
+    for i in range(numero_de_pastas + 1):
+        path_dtm = path_cisalhante + str(i) + r'_dtm.csv'
+        try:
+            dtm_freq = pd.read_csv(path_dtm, index_col=0, sep=',', encoding='windows-1252')
+            dtm = dtm_freq[str(5000000.0)][0]
+            phi = dtm_freq['phi'][0]
+            tempo_propagacao = tempos_propagacao.iloc[i - 1][0]
+            S11S22 = s11s22(constantes, dtm, phi)
+            S11 = s11(constantes, dtm, tempo_propagacao, phi)
+            S22 = s22(constantes, dtm, tempo_propagacao, phi)
+            S12 = s12(constantes, dtm, phi)
+            print(S11, S22)
+            # diferenca_de_fase_frequencia.to_csv(path_cisalhante + str(i) + r'_dif_phase.csv')
+        except Exception as e:
+            pass
+
+
+main()
 
 
 

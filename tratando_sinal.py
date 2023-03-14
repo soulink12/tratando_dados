@@ -12,9 +12,9 @@ class Sinal:
         self.fs = 2.5e9
         self.xinterval = 1 / self.fs
         sinal = pd.read_table(sinal_path, header=None, decimal=',', names=["sinal_original"])
-        self.sinal = np.array(sinal['sinal_original'])
-        self.inicio = self.detectar_comprimento(self.sinal)
-        self.sinal_modificado = self.criar_sinal_modificado(self.sinal, self.inicio, 0.2)
+        self.sinal_original = np.array(sinal['sinal_original'])
+        self.inicio = self.detectar_comprimento(self.sinal_original)
+        self.sinal_modificado = self.criar_sinal_modificado(self.sinal_original, self.inicio, 0.2)
         self.pico_isolado, _ = self.selecionar_maior_pico(self.sinal_modificado, self.inicio)
         self.amplitude, self.freq_amplitude, self.primeira_freq_caracteristica = self.calcular_frequencia_caracteristica(
             self.pico_isolado)
@@ -136,11 +136,9 @@ class Sinal:
             else:
                 i += 1
 
-#sinal = Sinal(r'C:\Users\souli\OneDrive\Trabalho\UFPA\Mestrado\Trabalho\medições\ultrassom\chapa g1\cisalhante\L1\1\1\0.txt')
+#sinal = Sinal(r'C:\Users\souli\OneDrive\Trabalho\UFPA\Mestrado\Trabalho\medições\ultrassom\chapa g2-auto\cisalhante\L1\4\3\0.txt')
 
-
-#phase, freq = sinal.espectro_de_fase(sinal.pico_isolado)
-#print(len(phase))
-#print(len(freq))
-#plt.plot(freq, phase)
+#sinal.sinal_modificado.tofile(r'C:\Users\souli\OneDrive\Trabalho\UFPA\Mestrado\Trabalho\medições\ultrassom\0_tratado.txt', sep = "\n")
+#sinal.sinal_original.tofile(r'C:\Users\souli\OneDrive\Trabalho\UFPA\Mestrado\Trabalho\medições\ultrassom\0_original.txt', sep = "\n")
+#plt.plot(sinal.sinal_modificado)
 #plt.show()

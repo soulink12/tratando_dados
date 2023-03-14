@@ -1,7 +1,9 @@
+import matplotlib.pyplot as plt
 import numpy as np
 import cupy as cp
 from cupy.fft import fft, ifft
 from scipy.interpolate import interp1d
+from scipy import signal
 
 
 mempool = cp.get_default_memory_pool()
@@ -25,6 +27,14 @@ def MYXCORR(A, B):
     cache.clear()
     return xcorrCPU
 
+def MYXCORR2(A, B):
+    xcorr = signal.correlate(A, B, mode='full')
+    return xcorr
+
+def MYXCORR3(A, B):
+    xcorr = np.correlate(A, B, mode='full')
+    return xcorr
+
 def myinterp(v, Np):
     v2 = np.arange(0, len(v) - 1, 1)
     Npv = np.arange(0, Np, 1)
@@ -44,11 +54,20 @@ def calculation(scaled_wave, tscale):
     new_time_vector = np.arange(0, len(scaled_wave)-1, 0.0625) * tscale
     #fy = interp1d(time_vector, scaled_wave, kind='cubic')
     fy = np.interp(new_time_vector, time_vector, scaled_wave)
-    y1INT = fy[0:int(len(fy) / 2)]
-    y2INT = fy[int(len(fy) / 2):len(fy)]
+    y1INT = fy[0:int(len(fy) / 2)].tolist()
+    y2INT = fy[int(len(fy) / 2):len(fy)].tolist()
     #y1INT = fy(new_time_vector[0:int(len(new_time_vector)/2)])
     #y2INT = fy(new_time_vector[int(len(new_time_vector)/2):len(new_time_vector)])
     c2 = MYXCORR(y2INT, y1INT)
+    c22 = MYXCORR2(y2INT, y1INT)
     diff = np.argmax(c2)
+    #diff2 = np.argmax(c22)
     tempo = new_time_vector[diff]
+    #tempo2 = new_time_vector[diff2]
+    #teste sem interpolação
+    #y1 = scaled_wave[0:int(len(scaled_wave) / 2)]
+    #y2 = scaled_wave[int(len(scaled_wave) / 2):len(scaled_wave)]
+    #c = MYXCORR(y2, y1)
+    #diffc = np.argmax(c)
+    #tempoc = time_vector[diffc]
     return tempo

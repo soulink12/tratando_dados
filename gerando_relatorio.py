@@ -9,7 +9,7 @@ from tratando_sinal import Sinal
 
 def gerar_dados_cisalhante(sinal_path):
     sinal = Sinal(sinal_path)
-    sinal_original = sinal.sinal
+    sinal_original = sinal.sinal_original
     sinal_modificado = sinal.sinal_modificado
     primeiro_pico = sinal.pico_isolado
     amplitude, freq_amplitude, primeira_freq_caracteristica = sinal.amplitude, sinal.freq_amplitude, sinal.primeira_freq_caracteristica
@@ -21,7 +21,7 @@ def gerar_dados_cisalhante(sinal_path):
 
 def gerar_dados_compressivo(sinal_path):
     sinal = Sinal(sinal_path)
-    sinal_original = sinal.sinal
+    sinal_original = sinal.sinal_original
     sinal_modificado = sinal.sinal_modificado
     primeiro_pico = sinal.pico_isolado
     segundo_pico = sinal.isolar_picos(sinal_modificado, 10000,  1)[0]
@@ -45,11 +45,11 @@ def salvar_dados_angulo(tempo_propagacao, primeira_freq_caracteristica, path, no
         arquivo.close()
 
 
-def salvar_tempo(tempo_propagacao, path, nome_arquivo):
+def salvar_tempo(tempo_propagacao, path, nome_arquivo, angulo):
     with open(path + str(nome_arquivo) + '_tempo.txt', 'w') as arquivo:
         arquivo.write('Ângulo\t' + 'Tempo de Propagação\n')
         for i in range(len(tempo_propagacao)):
-            arquivo.write(str(i * 11.25) + '\t' + str(tempo_propagacao[i]) + '\n')
+            arquivo.write(str(i * angulo) + '\t' + str(tempo_propagacao[i]) + '\n')
         arquivo.close()
 
 
@@ -60,7 +60,7 @@ def contar_arquivos(path):
     return count
 
 
-def processar_dados_cisalhante(path):
+def processar_dados_cisalhante(path, diferenca_angulo):
     # Processando os arquivos individuais de cada pasta e salvando os dados em um arquivo txt.
     # O arquivo txt será usado para gerar o gráfico
     # Funcina apenas para a pasta cisalhante
@@ -92,10 +92,10 @@ def processar_dados_cisalhante(path):
                         tempos_propagacao_lista.append(tempo_propagacao)
                         primeira_freq_caracteristica_lista.append(primeira_freq_caracteristica)
                         pbar.update(1)
-                dsPhaseAngulo['freq'] = freq_fase[0:]
+                dsPhaseAngulo['freq'] = freq_fase[0:401]
                 dsFreqAngulo['freq'] = freq_amplitude[0:401]
-                dsPhaseAngulo[str((int(angulo) - 1) * 11.25)] = faseDF.mean(axis=1)[0:]
-                dsFreqAngulo[str((int(angulo) - 1) * 11.25)] = amplitude[0:401]
+                dsPhaseAngulo[str((int(angulo)) * diferenca_angulo)] = faseDF.mean(axis=1)[0:401]
+                dsFreqAngulo[str((int(angulo)) * diferenca_angulo)] = amplitude[0:401]
                 tempos_propagacao_medio_lista.append(np.mean(tempos_propagacao_lista))
                 primeiras_freqs_caracteristicas_media_lista.append(np.mean(primeira_freq_caracteristica_lista))
             if not np.isnan(tempos_propagacao_medio_lista[0]):
@@ -118,7 +118,7 @@ def processar_dados_cisalhante(path):
                 dsFreqAngulo.to_csv(path_cisalhante + i + r'_freq.csv', sep=',', encoding='windows-1252')
 
                 salvar_dados_angulo(tempos_propagacao_medio_lista, primeiras_freqs_caracteristicas_media_lista,
-                                    path_cisalhante, i, 11.25)
+                                    path_cisalhante, i, diferenca_angulo)
                 print('\n' + 'Dados da pasta ' + str(i) + ' salvos com sucesso!')
     # criar_graficos_cisalhante(path_cisalhante)
 
@@ -197,16 +197,16 @@ def processar_dados_compressivo(path):
             dsPhase.to_csv(path_compressivo + i + r'_phase.csv', sep=',', encoding='windows-1252')
             #TODO: SALVAR AQUI EM BAIXO COM UM PANDAS
             #salvar_dados_angulo(tempos_propagacao_medio_lista, primeiras_freqs_caracteristicas_media_lista1,
-            #                    path_compressivo, i, 11.25)
+            #                    path_compressivo, i, diferenca_angulo)
             print('\n' + 'Dados da pasta ' + str(i) + ' salvos com sucesso!')
         dsTempoPropagacao = pd.DataFrame(tempos_propagacao_medio_lista[1:], columns=['Tempo de Propagação'])
         dsTempoPropagacao.to_csv(path_compressivo + r'tempo_propagacao.csv', sep=',', encoding='windows-1252')
 
 
 
-path = r'C:\Users\souli\OneDrive\Trabalho\UFPA\Mestrado\Trabalho\medições\ultrassom\chapa g1\cisalhante\L1\\'
+path = r'C:\Users\souli\OneDrive\Trabalho\UFPA\Mestrado\Trabalho\medições\ultrassom\chapa A3 auto\centro\cisalhante\\'
 
-processar_dados_cisalhante(path)
+processar_dados_cisalhante(path, 90)
 #processar_dados_compressivo(path)
 
 # Gerando o gráfico a partir dos arquivos txt gerados anteriormente
