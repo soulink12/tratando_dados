@@ -71,3 +71,29 @@ def calculation(scaled_wave, tscale):
     #diffc = np.argmax(c)
     #tempoc = time_vector[diffc]
     return tempo
+
+def calculation2(scaled_wave1, scaled_wave2, tscale):
+    time_vector = np.arange(0,len(scaled_wave1), 1) * tscale
+    new_time_vector = np.arange(0, len(scaled_wave1)-1, 0.0625) * tscale
+    fy1_calib = np.interp(new_time_vector, time_vector, scaled_wave1)
+    fy2_calib = np.interp(new_time_vector, time_vector, scaled_wave1)
+    y1INT_calib = fy1_calib.tolist()
+    y2INT_calib = fy2_calib.tolist()
+    c2_calib = MYXCORR(y2INT_calib, y1INT_calib)
+    diff_calib = np.argmax(c2_calib)
+    tempo_calibracao = new_time_vector[diff_calib]
+
+    fy1 = np.interp(new_time_vector, time_vector, scaled_wave1)
+    fy2 = np.interp(new_time_vector, time_vector, scaled_wave2)
+    y1INT = fy1.tolist()
+    y2INT = fy2.tolist()
+    c2 = MYXCORR(y2INT, y1INT)
+    diff = np.argmax(c2)
+    if diff< len(new_time_vector):
+        tempo = new_time_vector[diff] - tempo_calibracao
+    else:
+        c2 = MYXCORR(y1INT, y2INT)
+        diff = np.argmax(c2)
+        tempo = (new_time_vector[diff] - tempo_calibracao)*-1
+
+    return tempo

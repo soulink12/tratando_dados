@@ -12,13 +12,14 @@ class Sinal:
         self.fs = 2.5e9
         self.xinterval = 1 / self.fs
         sinal = pd.read_table(sinal_path, header=None, decimal=',', names=["sinal_original"])
-        self.sinal_original = np.array(sinal['sinal_original'])
+        self.sinal_original = np.abs(np.array(sinal['sinal_original']))
         self.inicio = self.detectar_comprimento(self.sinal_original)
-        self.sinal_modificado = self.criar_sinal_modificado(self.sinal_original, self.inicio, 0.2)
+        self.sinal_modificado = self.criar_sinal_modificado(self.sinal_original, self.inicio, 0.1)
         self.pico_isolado, _ = self.selecionar_maior_pico(self.sinal_modificado, self.inicio)
         self.amplitude, self.freq_amplitude, self.primeira_freq_caracteristica = self.calcular_frequencia_caracteristica(
             self.pico_isolado)
         self.phase, self.freq_phase = self.espectro_de_fase(self.sinal_modificado)
+
 
     @staticmethod
     def detectar_comprimento(sinal):
@@ -35,13 +36,14 @@ class Sinal:
         sinal_modificado = self.remover_pico_inicial(sinal, inicio)
         sinal_modificado = self.arredondando_para_zero(sinal_modificado)
         #sinal_modificado = self.filtrando_band_pass(sinal_modificado, 1.5e6, 8.5e6, self.fs, order=1)
-        self.tempo_propagacao = self.calcular_tempo_propagacao(sinal_modificado, self.inicio)
         sinal_modificado = self.removendo_amplitude(sinal_modificado, db)
+        self.tempo_propagacao = self.calcular_tempo_propagacao(sinal_modificado, self.inicio)
         return sinal_modificado
 
     def calcular_tempo_propagacao(self, sinal, inicio):
-        _, indice_valor_max0 = self.isolar_picos(sinal, inicio, 0)
-        _, indice_valor_max1 = self.isolar_picos(sinal, inicio, 1)
+        #sinal = np.abs(sinal)
+        pico1, indice_valor_max0 = self.isolar_picos(sinal, inicio, 0)
+        pico2, indice_valor_max1 = self.isolar_picos(sinal, inicio, 1)
         intervalo = int(np.floor(inicio/2))
         if(indice_valor_max0 >= intervalo):
             sinal_cortado = sinal[indice_valor_max0 - intervalo:indice_valor_max1 + intervalo]
@@ -121,7 +123,9 @@ class Sinal:
         if(indice_valor_max >= range_valores):
             pico_isolado = sinal[indice_valor_max - range_valores:indice_valor_max + range_valores]
         else:
-            pico_isolado = sinal[0:indice_valor_max + range_valores]
+            dif = range_valores - indice_valor_max
+            pico_isolado = np.zeros(dif).tolist() + sinal[0:indice_valor_max + range_valores].tolist()
+
         return pico_isolado, indice_valor_max
 
     def selecionar_maior_pico(self, sinal, inicio):
@@ -136,9 +140,10 @@ class Sinal:
             else:
                 i += 1
 
-#sinal = Sinal(r'C:\Users\souli\OneDrive\Trabalho\UFPA\Mestrado\Trabalho\medições\ultrassom\chapa g2-auto\cisalhante\L1\4\3\0.txt')
 
-#sinal.sinal_modificado.tofile(r'C:\Users\souli\OneDrive\Trabalho\UFPA\Mestrado\Trabalho\medições\ultrassom\0_tratado.txt', sep = "\n")
-#sinal.sinal_original.tofile(r'C:\Users\souli\OneDrive\Trabalho\UFPA\Mestrado\Trabalho\medições\ultrassom\0_original.txt', sep = "\n")
-#plt.plot(sinal.sinal_modificado)
-#plt.show()
+#sinal = Sinal(r'D:\ultrassom\0 - 45.txt')
+#sinal.sinal_modificado.tofile(r'D:\ultrassom\0 - 45mod', sep = "\n")
+#sinal = Sinal(r'D:\ultrassom\0 - 135.txt')
+#sinal.sinal_modificado.tofile(r'D:\ultrassom\0 - 135mod', sep = "\n")
+
+

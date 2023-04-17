@@ -5,6 +5,7 @@ import pandas as pd
 import os
 import tqdm
 from tratando_sinal import Sinal
+import mathmate as mm
 
 
 def gerar_dados_cisalhante(sinal_path):
@@ -122,7 +123,6 @@ def processar_dados_cisalhante(path, diferenca_angulo):
                 print('\n' + 'Dados da pasta ' + str(i) + ' salvos com sucesso!')
     # criar_graficos_cisalhante(path_cisalhante)
 
-
 def plot_signal(sinal_original):
     tempo = np.arange(0, len(sinal_original), 1) * 0.0000000004
     font = {'family': 'normal',
@@ -202,11 +202,119 @@ def processar_dados_compressivo(path):
         dsTempoPropagacao = pd.DataFrame(tempos_propagacao_medio_lista[1:], columns=['Tempo de Propagação'])
         dsTempoPropagacao.to_csv(path_compressivo + r'tempo_propagacao.csv', sep=',', encoding='windows-1252')
 
+def processar_dados_wang(path,passo_angulo, angulo_inicial):
+    # Processando os arquivos individuais de cada pasta e salvando os dados em um arquivo txt.
+    # O arquivo txt será usado para gerar o gráfico
+    # Funcina apenas para a pasta cisalhante
+
+    path_cisalhante = path
+    pastas = sorted(next(os.walk(path_cisalhante))[1], key=int)
+    numero_de_arquivos = contar_arquivos(path_cisalhante)
+
+    pasta_inicial = int(angulo_inicial/passo_angulo)
+    pasta_final = int((angulo_inicial + 90)/passo_angulo)
+    arquivo_final = pd.DataFrame()
+    with tqdm.tqdm(total=numero_de_arquivos) as pbar:
+        for i in pastas:
+            arquivos_da_pasta1 = next(os.walk(path_cisalhante + i + r"\\" + str(pasta_inicial)))[2]
+            arquivos_da_pasta2 = next(os.walk(path_cisalhante + i + r"\\" + str(pasta_final)))[2]
+            if not len(arquivos_da_pasta1) ==0 and not arquivos_da_pasta2 == 0:
+                dTm_lista = []
+                for arquivo1, arquivo2 in zip(arquivos_da_pasta1, arquivos_da_pasta2):
+                    path1 = str(path_cisalhante) + str(i) + r"\\" + str(pasta_inicial) + r"\\" + str(arquivo1)
+                    path2 = str(path_cisalhante) + str(i) + r"\\" + str(pasta_final) + r"\\" + str(arquivo2)
+                    _, sinal_modificado1, _, _, _, _, _, _, _ = gerar_dados_cisalhante(path1)
+                    _, sinal_modificado2, _, _, _, _, _, _, _ = gerar_dados_cisalhante(path2)
+                    sinal1 = sinal_modificado1[0:10000]
+                    sinal2 = sinal_modificado2[0:10000]
+                    dTm = mm.calculation2(sinal1, sinal2, 1 / (2.5e9))
+                    dTm_lista.append(dTm)
+                    pbar.update(1)
+                arquivo_final[i] = dTm_lista
+        arquivo_final.to_csv(path + rf'/wang_final.csv', sep=',', encoding='windows-1252')
+        print('\n' + 'Dados da pasta ' + str(i) + ' salvos com sucesso!')
 
 
-path = r'C:\Users\souli\OneDrive\Trabalho\UFPA\Mestrado\Trabalho\medições\ultrassom\chapa A3 auto\centro\cisalhante\\'
+def processar_dados_wang_acustoelasticidade(path1, path2):
+    # Processando os arquivos individuais de cada pasta e salvando os dados em um arquivo txt.
+    # O arquivo txt será usado para gerar o gráfico
+    # Funciona apenas para a pasta transversal
 
-processar_dados_cisalhante(path, 90)
+    pastas1 = sorted(next(os.walk(path1))[1], key=int)
+    pastas2 = sorted(next(os.walk(path2))[1], key=int)
+    numero_de_arquivos = contar_arquivos(path1)
+    arquivo_final = pd.DataFrame()
+    with tqdm.tqdm(total=numero_de_arquivos) as pbar:
+        for i in pastas1:
+            arquivos_da_pasta1 = next(os.walk(path1 + i))[2]
+            arquivos_da_pasta2 = next(os.walk(path2 + i))[2]
+            dTm_lista = []
+            for arquivo1, arquivo2 in zip(arquivos_da_pasta1,arquivos_da_pasta2):
+                path_final1 = path1 + i + r"\\" + arquivo1
+                path_final2 = path2 + i + r"\\" + arquivo2
+                _, sinal_modificado1, pico_sinal1, _, _, _, _, _, _, _, _, _, _, _, _ = gerar_dados_compressivo(path_final1)
+                _, sinal_modificado2, pico_sinal2, _, _, _, _, _, _, _, _, _, _, _, _ = gerar_dados_compressivo(path_final2)
+                sinal1 = sinal_modificado1[0:10000]
+                sinal2 = sinal_modificado2[0:10000]
+                pbar.update(1)
+                dTm = mm.calculation2(sinal1, sinal2, 1/(2.5e9))
+                dTm_lista.append(dTm)
+            arquivo_final[i] = dTm_lista
+        arquivo_final.to_csv(path1 + r'../wang.csv', sep=',', encoding='windows-1252')
+        print('\n' + 'Dados salvos com sucesso!')
+
+
+
+def processar_dados_pelo_tempo(path):
+
+    # Processando os arquivos individuais de cada pasta e salvando os dados em um arquivo txt.
+    # O arquivo txt será usado para gerar o gráfico
+    # Funciona apenas para a pasta transversal
+
+    path_compressivo = path
+    pastas = sorted(next(os.walk(path_compressivo))[1], key=int)
+    numero_de_arquivos = contar_arquivos(path_compressivo)
+    with tqdm.tqdm(total=numero_de_arquivos) as pbar:
+        tempos_propagacao_medio_lista = np.array([0])
+        for i in pastas:
+            arquivos_da_pasta = next(os.walk(path_compressivo + i))[2]
+            tempos_propagacao_lista = []
+            for arquivo in arquivos_da_pasta:
+
+                sinal_original, sinal_modificado, primeiro_pico, segundo_pico, tempo_propagacao, amplitude1, \
+                    freq_amplitude1, amplitude2, freq_amplitude2, primeira_freq_caracteristica1, \
+                    primeira_freq_caracteristica2, phase1, freq_phase1, phase2, freq_phase2\
+                    = gerar_dados_compressivo(path_compressivo + i + r"\\" + arquivo)
+                tempos_propagacao_lista.append(tempo_propagacao)
+
+                pbar.update(1)
+            tempos_propagacao_medio_lista = np.vstack((tempos_propagacao_medio_lista, np.mean(tempos_propagacao_lista)))
+            np.savetxt(fr"{path_compressivo}\{i}.txt", tempos_propagacao_lista)
+
+            #TODO: SALVAR AQUI EM BAIXO COM UM PANDAS
+            #salvar_dados_angulo(tempos_propagacao_medio_lista, primeiras_freqs_caracteristicas_media_lista1,
+            #                    path_compressivo, i, diferenca_angulo)
+            print('\n' + 'Dados da pasta ' + str(i) + ' salvos com sucesso!')
+        dsTempoPropagacao = pd.DataFrame(tempos_propagacao_medio_lista[1:], columns=['Tempo de Propagação'])
+        dsTempoPropagacao.to_csv(path_compressivo + r'tempo_propagacao.csv', sep=',', encoding='windows-1252')
+
+
+#a = [1,2,3]
+#b = [1,2]
+#for j in b:
+#    for i in a:
+#        path = rf'D:\ultrassom\chapa g{j}-auto\compressivo\L' + str(i) + r'\\'
+#        processar_dados_cisalhante(path, 5)
+#        processar_dados_compressivo(path)
+
+path1 = r'D:\ultrassom\acustoelasticidade\2\cisalhante\45-2\\'
+path2 = r'D:\ultrassom\acustoelasticidade\2\cisalhante\135\\'
+
+#processar_dados_wang_acustoelasticidade(path1, path2)
+path = r"D:\ultrassom\chapa g2-auto\cisalhante\L3\\"
+processar_dados_wang(path, 5, 45)
+#processar_dados_cisalhante(path, 5)
 #processar_dados_compressivo(path)
+#processar_dados_pelo_tempo(path)
 
 # Gerando o gráfico a partir dos arquivos txt gerados anteriormente

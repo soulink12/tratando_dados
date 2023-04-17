@@ -60,14 +60,15 @@ def mapear_dados_cisalhante(path_cisalhante, numero_de_pastas, angulo_0, angulo_
             lista_tempo_90.append(tempo_90)
             birrefringencia = calcular_birrefringencia(tempo_0, tempo_90)
             lista_birrefringencia.append(birrefringencia)
-        except:
+        except Exception as e:
             print('Erro na pasta ' + str(i + 1))
+            print(e)
     return pd.DataFrame({'tempo 0':lista_tempo_0, 'tempo 90':lista_tempo_90, 'birrefringencia': lista_birrefringencia})
 
 
-path_cisalhante = r"C:\Users\souli\OneDrive\Trabalho\UFPA\Mestrado\Trabalho\medições\ultrassom\chapa A3 auto\lateral\cisalhante\\"
-path_compressivo = r"C:\Users\souli\OneDrive\Trabalho\UFPA\Mestrado\Trabalho\medições\ultrassom\chapa g1\compressivo\L1\tempo_propagacao.csv"
-numero_de_pastas = 6
-#dados = mapear_dados_cisalhante_compressivo(path_cisalhante, path_compressivo, numero_de_pastas, 180, 90)
-dados = mapear_dados_cisalhante(path_cisalhante, numero_de_pastas, 180, 90)
-dados.to_csv(r'C:\Users\souli\OneDrive\Trabalho\UFPA\Mestrado\Trabalho\medições\ultrassom\chapa A3 auto\lateral\lateral.csv', sep=',', encoding='windows-1252')
+path_cisalhante = r"D:\ultrassom\chapa g1-auto\cisalhante\L2\\"
+path_compressivo = r"D:\ultrassom\chapa g1-auto\compressivo\L2\tempo_propagacao.csv"
+numero_de_pastas = 14
+dados = mapear_dados_cisalhante_compressivo(path_cisalhante, path_compressivo, numero_de_pastas, 90, 0)
+#dados = mapear_dados_cisalhante(path_cisalhante, numero_de_pastas, 90, 0)
+dados.to_csv(r'D:\ultrassom\chapa g1-auto\L2.csv', sep=',', encoding='windows-1252')
