@@ -9,7 +9,7 @@ def calcular_birrefringencia(tempo_0, tempo_90):
 
 
 def calcular_razao_tempos(tempo_0, tempo_90, tempo_compressivo):
-    return 2 * tempo_compressivo / (tempo_0 + tempo_90)
+    return (2*tempo_0*tempo_90)/(tempo_compressivo*(tempo_0 + tempo_90))
 
 
 def get_tempo_cisalhante(path, angulo_0, angulo_90):
@@ -66,9 +66,9 @@ def mapear_dados_cisalhante(path_cisalhante, numero_de_pastas, angulo_0, angulo_
     return pd.DataFrame({'tempo 0':lista_tempo_0, 'tempo 90':lista_tempo_90, 'birrefringencia': lista_birrefringencia})
 
 
-path_cisalhante = r"D:\ultrassom\chapa g1-auto\cisalhante\L2\\"
-path_compressivo = r"D:\ultrassom\chapa g1-auto\compressivo\L2\tempo_propagacao.csv"
+path_cisalhante = r"C:\Users\souli\OneDrive\Trabalho\UFPA\Mestrado\Trabalho\medições\ultrassom-refeito\G2\cisalhante\automatic\L3\\"
+path_compressivo = r"C:\Users\souli\OneDrive\Trabalho\UFPA\Mestrado\Trabalho\medições\ultrassom-refeito\G2\compressivo\L3\tempo_propagacao.csv"
 numero_de_pastas = 14
-dados = mapear_dados_cisalhante_compressivo(path_cisalhante, path_compressivo, numero_de_pastas, 90, 0)
+dados = mapear_dados_cisalhante_compressivo(path_cisalhante, path_compressivo, numero_de_pastas, 90, 180)
 #dados = mapear_dados_cisalhante(path_cisalhante, numero_de_pastas, 90, 0)
-dados.to_csv(r'D:\ultrassom\chapa g1-auto\L2.csv', sep=',', encoding='windows-1252')
+dados.to_csv(r'C:\Users\souli\OneDrive\Trabalho\UFPA\Mestrado\Trabalho\medições\ultrassom-refeito\G2\L3-automatic-180-90.csv', sep=',', encoding='windows-1252')

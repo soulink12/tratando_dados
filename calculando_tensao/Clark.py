@@ -40,13 +40,13 @@ def mapear_dados_cisalhante(path_cisalhante, numero_de_pastas, angulo_0, angulo_
     return pd.DataFrame({'tempo 0':lista_tempo_0, 'tempo 90':lista_tempo_90, 'birrefringencia': lista_birrefringencia})
 
 
-path_inicial = r"D:\ultrassom\chapa g2-auto\cisalhante"
+path_inicial = r"C:\Users\souli\OneDrive\Trabalho\UFPA\Mestrado\Trabalho\medições\ultrassom-refeito\G1\cisalhante\automatic"
 
 n_pastas = 14
 
 dados_corrigidos = encontrar_direcao_polarizacao(path_inicial, n_pastas, 5)
 
-dados_corrigidos.to_csv(r"D:\ultrassom\chapa g2-auto\cisalhante\clark-dados-angulos.csv", sep='\t', encoding='windows-1252')
+dados_corrigidos.to_csv(r"C:\Users\souli\OneDrive\Trabalho\UFPA\Mestrado\Trabalho\medições\ultrassom-refeito\G1\clark-dados-angulos-g1.csv", sep='\t', encoding='windows-1252')
 
 #path_cisalhante = r"D:\ultrassom\chapa A3 auto\centro\cisalhante\\"
 #path_compressivo = r"D:\ultrassom\chapa A3 auto\centro\compressivo\tempo_propagacao.csv"

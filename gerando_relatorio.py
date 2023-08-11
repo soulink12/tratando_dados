@@ -299,21 +299,21 @@ def processar_dados_pelo_tempo(path):
         dsTempoPropagacao.to_csv(path_compressivo + r'tempo_propagacao.csv', sep=',', encoding='windows-1252')
 
 
-#a = [1,2,3]
-#b = [1,2]
-#for j in b:
-#    for i in a:
-#        path = rf'D:\ultrassom\chapa g{j}-auto\compressivo\L' + str(i) + r'\\'
-#        processar_dados_cisalhante(path, 5)
-#        processar_dados_compressivo(path)
+a = [1,2,3]
+b = [1, 2]
+for j in b:
+    for i in a:
+        path = rf'C:\Users\souli\OneDrive\Trabalho\UFPA\Mestrado\Trabalho\medições\ultrassom-refeito\trilho\s03\cisalhante\\' + str(i) + r'\\'
+        #processar_dados_cisalhante(path, 5)
+        #processar_dados_compressivo(path)
 
 path1 = r'D:\ultrassom\acustoelasticidade\2\cisalhante\45-2\\'
 path2 = r'D:\ultrassom\acustoelasticidade\2\cisalhante\135\\'
 
 #processar_dados_wang_acustoelasticidade(path1, path2)
-path = r"D:\ultrassom\chapa g2-auto\cisalhante\L3\\"
-processar_dados_wang(path, 5, 45)
-#processar_dados_cisalhante(path, 5)
+path = r"C:\Users\souli\OneDrive\Trabalho\UFPA\Mestrado\Trabalho\medições\ultrassom-refeito\trilho\s11-premium\cisalhante\\"
+#processar_dados_wang(path, 5, 45)
+processar_dados_cisalhante(path, 5)
 #processar_dados_compressivo(path)
 #processar_dados_pelo_tempo(path)
 
